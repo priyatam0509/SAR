@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Railway Announcement System - AI Enhanced Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', 'Cairo', sans-serif;
+        }
+        
+        [dir="rtl"] {
+            font-family: 'Cairo', 'Inter', sans-serif;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(0.9);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1.3);
+                opacity: 0;
+            }
+        }
+        
+        .recording {
+            animation: pulse 1s ease-in-out infinite;
+        }
+        
+        .recording::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: rgba(239, 68, 68, 0.5);
+            animation: pulse-ring 1.5s ease-out infinite;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .processing {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        .translating {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navigation Bar -->
+    <nav class="gradient-bg text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-3">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                    </svg>
+                    <div>
+                        <h1 class="text-xl font-bold">Railway Announcement System</h1>
+                        <p class="text-xs text-white/80">🤖 AI Translation + Voice Recognition</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="glass px-3 py-1 rounded-lg text-sm">
+                        🔊 Audio: <span id="audioStatus" class="font-bold">Ready</span>
+                    </div>
+                    <div class="glass px-3 py-1 rounded-lg text-sm">
+                        🌐 Translation: <span id="translationStatus" class="font-bold">Ready</span>
+                    </div>
+                    <button onclick="toggleLanguage()" class="glass px-4 py-2 rounded-lg hover:bg-white/20 transition">
+                        <span id="langBtn">عربي</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Tab Navigation -->
+        <div class="mb-6">
+            <div class="flex space-x-2 bg-white rounded-lg p-1 shadow-md overflow-x-auto">
+                <button onclick="showTab('dashboard')" id="tab-dashboard" class="tab-btn active px-6 py-3 rounded-md font-medium transition whitespace-nowrap">
+                    📊 Dashboard
+                </button>
+                <button onclick="showTab('announcements')" id="tab-announcements" class="tab-btn px-6 py-3 rounded-md font-medium transition whitespace-nowrap">
+                    📢 Create Announcement
+                </button>
+                <button onclick="showTab('urgent')" id="tab-urgent" class="tab-btn px-6 py-3 rounded-md font-medium transition whitespace-nowrap">
+                    🚨 Urgent
+                </button>
+                <button onclick="showTab('history')" id="tab-history" class="tab-btn px-6 py-3 rounded-md font-medium transition whitespace-nowrap">
+                    🕐 History
+                </button>
+            </div>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="content-dashboard" class="tab-content">
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-xl shadow-md p-6 slide-in">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm mb-1">Total Today</p>
+                            <p class="text-3xl font-bold text-gray-800" id="stat-total">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <span class="text-2xl">📢</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-md p-6 slide-in" style="animation-delay: 0.1s">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm mb-1">Completed</p>
+                            <p class="text-3xl font-bold text-green-600" id="stat-completed">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <span class="text-2xl">✅</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-md p-6 slide-in" style="animation-delay: 0.2s">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm mb-1">In Queue</p>
+                            <p class="text-3xl font-bold text-yellow-600" id="stat-queued">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                            <span class="text-2xl">⏳</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-md p-6 slide-in" style="animation-delay: 0.3s">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm mb-1">Translations</p>
+                            <p class="text-3xl font-bold text-purple-600" id="stat-translations">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <span class="text-2xl">🌐</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Real-time Queue -->
+            <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                        <span class="mr-2">⏱️</span> Real-time Announcement Queue
+                    </h2>
+                    <div class="flex space-x-2">
+                        <button onclick="pauseQueue()" id="pauseBtn" class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition">
+                            ⏸️ Pause
+                        </button>
+                        <button onclick="clearQueue()" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">
+                            🗑️ Clear
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="space-y-4" id="queueList">
+                    <div class="text-center text-gray-500 py-8">
+                        Queue is empty. Create an announcement to get started!
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Announcement Tab -->
+        <div id="content-announcements" class="tab-content hidden">
+            <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 mb-6">
+                <div class="flex items-start">
+                    <span class="text-2xl mr-3">🤖</span>
+                    <div>
+                        <h3 class="font-bold text-blue-800 mb-1">AI Auto-Translation Enabled</h3>
+                        <p class="text-blue-700 text-sm">Type in English - Arabic translation happens automatically! Or use voice input in either language.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-md p-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Create New Announcement</h2>
+                
+                <form onsubmit="createAnnouncement(event)" class="space-y-6">
+                    <!-- Platform and Train -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Platform Number</label>
+                            <input type="text" id="platform" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 5" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Train Number</label>
+                            <input type="text" id="trainNumber" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 123" required>
+                        </div>
+                    </div>
+
+                    <!-- Destination -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Destination</label>
+                        <input type="text" id="destination" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Riyadh, Jeddah" required>
+                    </div>
+
+                    <!-- English Text (Primary Input) -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="block text-sm font-medium text-gray-700">English Announcement (Type Here)</label>
+                            <button type="button" onclick="useVoiceInput('en', 'textEnglish')" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm hover:bg-blue-200 transition flex items-center">
+                                🎤 Voice Input (English)
+                            </button>
+                        </div>
+                        <textarea id="textEnglish" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Type in English... (Auto-translates to Arabic)" required></textarea>
+                        <p class="text-sm text-gray-500 mt-1"><span id="englishCount">0</span>/500 characters</p>
+                    </div>
+
+                    <!-- Arabic Text (Auto-translated) -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="block text-sm font-medium text-gray-700">Arabic Announcement (Auto-Translated)</label>
+                            <button type="button" onclick="useVoiceInput('ar', 'textArabic')" class="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-sm hover:bg-green-200 transition flex items-center">
+                                🎤 Voice Input (Arabic)
+                            </button>
+                        </div>
+                        <textarea id="textArabic" dir="rtl" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-gray-50" placeholder="ترجمة تلقائية..." readonly></textarea>
+                        <p class="text-sm text-gray-500 mt-1">
+                            <span id="arabicCount">0</span>/500 characters
+                            <span id="translationIndicator" class="ml-2 text-blue-600 hidden">🔄 Translating...</span>
+                        </p>
+                    </div>
+
+                    <!-- Manual Edit Option -->
+                    <div class="flex items-center space-x-3">
+                        <input type="checkbox" id="manualEdit" onchange="toggleManualEdit()" class="w-5 h-5 text-blue-600 rounded">
+                        <label for="manualEdit" class="text-sm font-medium text-gray-700">Manually edit Arabic text (disable auto-translation)</label>
+                    </div>
+
+                    <!-- Bilingual Option -->
+                    <div class="flex items-center space-x-3">
+                        <input type="checkbox" id="bilingual" checked class="w-5 h-5 text-blue-600 rounded">
+                        <label for="bilingual" class="text-sm font-medium text-gray-700">Bilingual Announcement (Arabic + English)</label>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="flex gap-4">
+                        <button type="submit" class="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transition flex items-center justify-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Create & Queue Announcement
+                        </button>
+                        <button type="button" onclick="previewAudio()" class="px-6 py-3 border-2 border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                            </svg>
+                            Preview Audio
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Urgent Announcement Tab -->
+        <div id="content-urgent" class="tab-content hidden">
+            <div class="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-6">
+                <div class="flex items-start">
+                    <span class="text-2xl mr-3">⚠️</span>
+                    <div>
+                        <h3 class="font-bold text-red-800 mb-1">Emergency Announcements</h3>
+                        <p class="text-red-700 text-sm">Broadcast immediately with highest priority. Supports English and Arabic voice input!</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-md p-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Create Urgent Announcement</h2>
+                
+                <!-- Language Selection for Voice -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-3">Voice Input Language</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button type="button" onclick="setVoiceLang('en')" id="voiceLangEn" class="p-4 border-2 border-blue-600 bg-blue-50 text-blue-700 rounded-lg font-medium hover:bg-blue-100 transition">
+                            🇺🇸 English
+                        </button>
+                        <button type="button" onclick="setVoiceLang('ar')" id="voiceLangAr" class="p-4 border-2 border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition">
+                            🇸🇦 Arabic (العربية)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Voice Input -->
+                <div class="mb-8">
+                    <label class="block text-sm font-medium text-gray-700 mb-4">Voice Input</label>
+                    <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">
+                        <button type="button" onclick="toggleUrgentRecording()" id="urgentRecordBtn" class="relative w-24 h-24 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center mx-auto mb-4 transition">
+                            <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                            </svg>
+                        </button>
+                        <p class="text-gray-600" id="urgentRecordStatus">Click microphone to start</p>
+                        <p class="text-sm text-blue-600 mt-2" id="urgentVoiceLang">Language: English</p>
+                    </div>
+                </div>
+
+                <!-- Text Input -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Or Type Urgent Message</label>
+                    <textarea id="urgentText" rows="4" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent" placeholder="Type your urgent announcement here..."></textarea>
+                </div>
+
+                <!-- Platform Selection -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-3">Platform</label>
+                    <input type="text" id="urgentPlatform" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500" placeholder="Platform number (or 'ALL' for all platforms)">
+                </div>
+
+                <!-- Broadcast Button -->
+                <button onclick="broadcastUrgent()" class="w-full bg-red-600 text-white py-4 px-6 rounded-lg font-bold text-lg hover:bg-red-700 transition flex items-center justify-center">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    BROADCAST URGENT ANNOUNCEMENT NOW
+                </button>
+            </div>
+        </div>
+
+        <!-- History Tab -->
+        <div id="content-history" class="tab-content hidden">
+            <div class="bg-white rounded-xl shadow-md p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Announcement History</h2>
+                    <button onclick="clearHistory()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                        Clear History
+                    </button>
+                </div>
+
+                <!-- History List -->
+                <div class="space-y-4" id="historyList">
+                    <div class="text-center text-gray-500 py-8">
+                        No announcements yet. Create one to see it here!
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Toast -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-4 rounded-lg shadow-lg hidden z-50">
+        <div class="flex items-center">
+            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span id="toastMessage">Success!</span>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let announcementQueue = [];
+        let historyItems = [];
+        let isQueuePaused = false;
+        let isProcessing = false;
+        let nextId = 1;
+        let translationCount = 0;
+        let autoTranslateEnabled = true;
+        let currentVoiceLang = 'en';
+        
+        // Statistics
+        let stats = {
+            total: 0,
+            completed: 0,
+            queued: 0,
+            failed: 0
+        };
+
+        // Text-to-Speech setup
+        const synth = window.speechSynthesis;
+        let voices = [];
+
+        // Voice recognition setup
+        let recognition;
+        let urgentRecognition;
+        let isRecording = false;
+        let isUrgentRecording = false;
+
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
+            // Regular voice recognition
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            
+            // Urgent voice recognition
+            urgentRecognition = new SpeechRecognition();
+            urgentRecognition.continuous = false;
+            urgentRecognition.interimResults = false;
+        }
+
+        // Simple translation dictionary (English to Arabic)
+        const translationDict = {
+            'train': 'القطار',
+            'number': 'رقم',
+            'platform': 'الرصيف',
+            'will arrive': 'سيصل',
+            'will depart': 'سيغادر',
+            'to': 'إلى',
+            'from': 'من',
+            'at': 'في',
+            'in': 'خلال',
+            'minutes': 'دقائق',
+            'heading': 'المتجه',
+            'riyadh': 'الرياض',
+            'jeddah': 'جدة',
+            'dammam': 'الدمام',
+            'makkah': 'مكة',
+            'madinah': 'المدينة',
+            'delayed': 'متأخر',
+            'cancelled': 'ملغى',
+            'please': 'من فضلك',
+            'attention': 'انتباه',
+            'passengers': 'الركاب',
+            'emergency': 'طارئ',
+            'change': 'تغيير',
+            'now': 'الآن',
+            'ready': 'جاهز',
+            'boarding': 'الصعود'
+        };
+
+        // Load voices
+        function loadVoices() {
+            voices = synth.getVoices();
+            console.log('Available voices:', voices.length);
+            
+            if (voices.length > 0) {
+                updateAudioStatus('Ready');
+            }
+        }
+
+        loadVoices();
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = loadVoices;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            setupCharacterCounters();
+            setupAutoTranslation();
+            startQueueProcessor();
+        });
+
+        function setupAutoTranslation() {
+            const englishInput = document.getElementById('textEnglish');
+            let translationTimeout;
+
+            englishInput.addEventListener('input', function(e) {
+                if (!autoTranslateEnabled) return;
+
+                clearTimeout(translationTimeout);
+                
+                const indicator = document.getElementById('translationIndicator');
+                indicator.classList.remove('hidden');
+                updateTranslationStatus('Translating...');
+
+                translationTimeout = setTimeout(() => {
+                    const englishText = e.target.value;
+                    if (englishText.trim()) {
+                        translateToArabic(englishText);
+                    } else {
+                        document.getElementById('textArabic').value = '';
+                        indicator.classList.add('hidden');
+                        updateTranslationStatus('Ready');
+                    }
+                }, 500);
+            });
+        }
+
+        function translateToArabic(englishText) {
+            const indicator = document.getElementById('translationIndicator');
+            const arabicInput = document.getElementById('textArabic');
+            
+            // Simple translation using dictionary
+            let translated = englishText.toLowerCase();
+            
+            // Replace known words
+            for (let [eng, ar] of Object.entries(translationDict)) {
+                const regex = new RegExp(eng, 'gi');
+                translated = translated.replace(regex, ar);
+            }
+            
+            // Convert numbers to Arabic numerals
+            translated = convertToArabicNumerals(translated);
+            
+            arabicInput.value = translated;
+            document.getElementById('arabicCount').textContent = translated.length;
+            
+            indicator.classList.add('hidden');
+            updateTranslationStatus('Ready');
+            translationCount++;
+            updateTranslationCount();
+            
+            showToast('✅ Translated to Arabic', 'green');
+        }
+
+        function convertToArabicNumerals(text) {
+            const arabicNumerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+            return text.replace(/\d/g, d => arabicNumerals[d]);
+        }
+
+        function toggleManualEdit() {
+            const checkbox = document.getElementById('manualEdit');
+            const arabicInput = document.getElementById('textArabic');
+            
+            autoTranslateEnabled = !checkbox.checked;
+            arabicInput.readOnly = !checkbox.checked;
+            
+            if (checkbox.checked) {
+                arabicInput.classList.remove('bg-gray-50');
+                arabicInput.classList.add('bg-white');
+                showToast('Manual editing enabled', 'blue');
+            } else {
+                arabicInput.classList.remove('bg-white');
+                arabicInput.classList.add('bg-gray-50');
+                showToast('Auto-translation enabled', 'blue');
+            }
+        }
+
+        function useVoiceInput(lang, targetId) {
+            if (!recognition) {
+                showToast('Voice recognition not supported in this browser', 'red');
+                return;
+            }
+
+            recognition.lang = lang === 'ar' ? 'ar-SA' : 'en-US';
+            
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById(targetId).value = transcript;
+                
+                // Update character count
+                if (targetId === 'textEnglish') {
+                    document.getElementById('englishCount').textContent = transcript.length;
+                    // Trigger auto-translation
+                    if (autoTranslateEnabled) {
+                        translateToArabic(transcript);
+                    }
+                } else {
+                    document.getElementById('arabicCount').textContent = transcript.length;
+                }
+                
+                showToast(`✅ Voice recognized (${lang === 'ar' ? 'Arabic' : 'English'}): ${transcript.substring(0, 50)}...`);
+            };
+            
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                showToast('Voice recognition error. Please try again.', 'red');
+            };
+            
+            recognition.start();
+            showToast(`🎤 Listening in ${lang === 'ar' ? 'Arabic' : 'English'}... Speak now!`, 'blue');
+        }
+
+        function setVoiceLang(lang) {
+            currentVoiceLang = lang;
+            
+            // Update button styles
+            document.getElementById('voiceLangEn').classList.toggle('border-blue-600', lang === 'en');
+            document.getElementById('voiceLangEn').classList.toggle('bg-blue-50', lang === 'en');
+            document.getElementById('voiceLangEn').classList.toggle('text-blue-700', lang === 'en');
+            document.getElementById('voiceLangEn').classList.toggle('border-gray-300', lang !== 'en');
+            
+            document.getElementById('voiceLangAr').classList.toggle('border-green-600', lang === 'ar');
+            document.getElementById('voiceLangAr').classList.toggle('bg-green-50', lang === 'ar');
+            document.getElementById('voiceLangAr').classList.toggle('text-green-700', lang === 'ar');
+            document.getElementById('voiceLangAr').classList.toggle('border-gray-300', lang !== 'ar');
+            
+            // Update language indicator
+            document.getElementById('urgentVoiceLang').textContent = 
+                `Language: ${lang === 'ar' ? 'Arabic (العربية)' : 'English'}`;
+            
+            // Set recognition language
+            if (urgentRecognition) {
+                urgentRecognition.lang = lang === 'ar' ? 'ar-SA' : 'en-US';
+            }
+            
+            showToast(`Voice language set to ${lang === 'ar' ? 'Arabic' : 'English'}`, 'blue');
+        }
+
+        function toggleUrgentRecording() {
+            if (!urgentRecognition) {
+                showToast('Voice recognition not supported in this browser', 'red');
+                return;
+            }
+            
+            if (isUrgentRecording) {
+                urgentRecognition.stop();
+                stopUrgentRecording();
+            } else {
+                urgentRecognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    document.getElementById('urgentText').value = transcript;
+                    showToast(`✅ Recognized (${currentVoiceLang === 'ar' ? 'Arabic' : 'English'}): ${transcript.substring(0, 50)}...`);
+                };
+                
+                urgentRecognition.onerror = (event) => {
+                    console.error('Speech recognition error:', event.error);
+                    showToast('Voice recognition error. Please try typing instead.', 'red');
+                    stopUrgentRecording();
+                };
+                
+                urgentRecognition.onend = () => {
+                    stopUrgentRecording();
+                };
+                
+                urgentRecognition.start();
+                startUrgentRecording();
+            }
+        }
+
+        function startUrgentRecording() {
+            isUrgentRecording = true;
+            const btn = document.getElementById('urgentRecordBtn');
+            const status = document.getElementById('urgentRecordStatus');
+            
+            btn.classList.add('recording');
+            status.textContent = '🔴 Recording... Click to stop';
+            showToast(`🎤 Recording in ${currentVoiceLang === 'ar' ? 'Arabic' : 'English'}... Speak now!`, 'blue');
+        }
+
+        function stopUrgentRecording() {
+            isUrgentRecording = false;
+            const btn = document.getElementById('urgentRecordBtn');
+            const status = document.getElementById('urgentRecordStatus');
+            
+            btn.classList.remove('recording');
+            status.textContent = 'Click microphone to start';
+        }
+
+        function updateTranslationStatus(status) {
+            document.getElementById('translationStatus').textContent = status;
+        }
+
+        function updateAudioStatus(status) {
+            document.getElementById('audioStatus').textContent = status;
+        }
+
+        function updateTranslationCount() {
+            document.getElementById('stat-translations').textContent = translationCount;
+        }
+
+        function createAnnouncement(e) {
+            e.preventDefault();
+            
+            const platform = document.getElementById('platform').value;
+            const trainNumber = document.getElementById('trainNumber').value;
+            const destination = document.getElementById('destination').value;
+            const textArabic = document.getElementById('textArabic').value;
+            const textEnglish = document.getElementById('textEnglish').value;
+            const isBilingual = document.getElementById('bilingual').checked;
+            
+            const announcement = {
+                id: nextId++,
+                platform,
+                trainNumber,
+                destination,
+                textArabic,
+                textEnglish,
+                isBilingual,
+                status: 'queued',
+                createdAt: new Date(),
+                priority: 'normal'
+            };
+            
+            announcementQueue.push(announcement);
+            stats.total++;
+            stats.queued++;
+            
+            updateStats();
+            updateQueue();
+            
+            showToast(`✅ Announcement queued for Platform ${platform}, Train ${trainNumber}`);
+            
+            // Reset form
+            e.target.reset();
+            document.getElementById('arabicCount').textContent = '0';
+            document.getElementById('englishCount').textContent = '0';
+            
+            // Switch to dashboard
+            showTab('dashboard');
+        }
+
+        function previewAudio() {
+            const textArabic = document.getElementById('textArabic').value;
+            const textEnglish = document.getElementById('textEnglish').value;
+            const isBilingual = document.getElementById('bilingual').checked;
+            
+            if (!textArabic && !textEnglish) {
+                showToast('Please enter announcement text first', 'red');
+                return;
+            }
+            
+            showToast('🔊 Playing audio preview...', 'blue');
+            updateAudioStatus('Playing');
+            
+            if (isBilingual && textArabic && textEnglish) {
+                speakText(textArabic, 'ar', () => {
+                    setTimeout(() => {
+                        speakText(textEnglish, 'en', () => {
+                            updateAudioStatus('Ready');
+                            showToast('✅ Preview completed');
+                        });
+                    }, 500);
+                });
+            } else if (textArabic) {
+                speakText(textArabic, 'ar', () => {
+                    updateAudioStatus('Ready');
+                    showToast('✅ Preview completed');
+                });
+            } else {
+                speakText(textEnglish, 'en', () => {
+                    updateAudioStatus('Ready');
+                    showToast('✅ Preview completed');
+                });
+            }
+        }
+
+        function speakText(text, lang, callback) {
+            if (!text) {
+                if (callback) callback();
+                return;
+            }
+            
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = lang === 'ar' ? 'ar-SA' : 'en-US';
+            utterance.rate = 0.9;
+            utterance.pitch = 1;
+            utterance.volume = 1;
+            
+            const voice = voices.find(v => v.lang.startsWith(lang)) || voices[0];
+            if (voice) {
+                utterance.voice = voice;
+            }
+            
+            utterance.onend = callback;
+            utterance.onerror = () => {
+                console.error('Speech synthesis error');
+                if (callback) callback();
+            };
+            
+            synth.speak(utterance);
+        }
+
+        function startQueueProcessor() {
+            setInterval(() => {
+                if (!isQueuePaused && !isProcessing && announcementQueue.length > 0) {
+                    processNextAnnouncement();
+                }
+            }, 1000);
+        }
+
+        async function processNextAnnouncement() {
+            if (announcementQueue.length === 0 || isProcessing) return;
+            
+            isProcessing = true;
+            const announcement = announcementQueue[0];
+            
+            announcement.status = 'processing';
+            stats.queued--;
+            updateStats();
+            updateQueue();
+            
+            showToast(`⚙️ Processing announcement for Platform ${announcement.platform}`);
+            updateAudioStatus('Processing');
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            announcement.status = 'playing';
+            updateQueue();
+            updateAudioStatus('Playing');
+            
+            const playAudio = () => {
+                return new Promise((resolve) => {
+                    if (announcement.isBilingual && announcement.textArabic && announcement.textEnglish) {
+                        speakText(announcement.textArabic, 'ar', () => {
+                            setTimeout(() => {
+                                speakText(announcement.textEnglish, 'en', resolve);
+                            }, 500);
+                        });
+                    } else if (announcement.textArabic) {
+                        speakText(announcement.textArabic, 'ar', resolve);
+                    } else {
+                        speakText(announcement.textEnglish, 'en', resolve);
+                    }
+                });
+            };
+            
+            await playAudio();
+            
+            announcement.status = 'completed';
+            announcement.completedAt = new Date();
+            stats.completed++;
+            
+            historyItems.unshift(announcement);
+            announcementQueue.shift();
+            
+            updateStats();
+            updateQueue();
+            updateHistory();
+            updateAudioStatus('Ready');
+            
+            showToast(`✅ Announcement completed for Platform ${announcement.platform}`, 'green');
+            
+            isProcessing = false;
+        }
+
+        function broadcastUrgent() {
+            const text = document.getElementById('urgentText').value;
+            const platform = document.getElementById('urgentPlatform').value || 'ALL';
+            
+            if (!text) {
+                showToast('⚠️ Please enter an urgent message', 'red');
+                return;
+            }
+            
+            const urgentAnnouncement = {
+                id: nextId++,
+                platform: platform,
+                trainNumber: 'URGENT',
+                destination: 'Emergency',
+                textArabic: '',
+                textEnglish: text,
+                isBilingual: false,
+                status: 'queued',
+                createdAt: new Date(),
+                priority: 'urgent'
+            };
+            
+            announcementQueue.unshift(urgentAnnouncement);
+            stats.total++;
+            stats.queued++;
+            
+            updateStats();
+            updateQueue();
+            
+            showToast('🚨 URGENT ANNOUNCEMENT QUEUED - Broadcasting immediately!', 'red');
+            
+            document.getElementById('urgentText').value = '';
+            document.getElementById('urgentPlatform').value = '';
+            
+            showTab('dashboard');
+        }
+
+        function updateQueue() {
+            const queueList = document.getElementById('queueList');
+            
+            if (announcementQueue.length === 0) {
+                queueList.innerHTML = '<div class="text-center text-gray-500 py-8">Queue is empty. Create an announcement to get started!</div>';
+                return;
+            }
+            
+            queueList.innerHTML = announcementQueue.map((item, index) => `
+                <div class="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition ${item.status === 'processing' || item.status === 'playing' ? 'processing border-blue-500' : ''}">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-${getStatusColor(item.status)}-100 rounded-lg flex items-center justify-center">
+                            <span class="text-xl">${getStatusIcon(item.status)}</span>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-800">Platform ${item.platform} - Train ${item.trainNumber}</p>
+                            <p class="text-sm text-gray-600">${item.textEnglish}</p>
+                            ${item.textArabic ? `<p class="text-sm text-gray-600" dir="rtl">${item.textArabic}</p>` : ''}
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-gray-500 mb-1">${formatTime(item.createdAt)}</p>
+                        <span class="px-3 py-1 bg-${getStatusColor(item.status)}-100 text-${getStatusColor(item.status)}-700 rounded-full text-xs font-medium">
+                            ${item.status.toUpperCase()}
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateHistory() {
+            const historyList = document.getElementById('historyList');
+            
+            if (historyItems.length === 0) {
+                historyList.innerHTML = '<div class="text-center text-gray-500 py-8">No announcements yet. Create one to see it here!</div>';
+                return;
+            }
+            
+            historyList.innerHTML = historyItems.map(item => `
+                <div class="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-${getStatusColor(item.status)}-100 rounded-lg flex items-center justify-center">
+                            <span class="text-xl">${getStatusIcon(item.status)}</span>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-800">Platform ${item.platform} - Train ${item.trainNumber} → ${item.destination}</p>
+                            <p class="text-sm text-gray-600">${item.textEnglish}</p>
+                            ${item.textArabic ? `<p class="text-sm text-gray-600" dir="rtl">${item.textArabic}</p>` : ''}
+                            <p class="text-xs text-gray-500">${formatTime(item.completedAt || item.createdAt)}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="replayAnnouncement(${item.id})" class="p-2 hover:bg-gray-100 rounded" title="Replay">
+                            🔊
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function replayAnnouncement(id) {
+            const item = historyItems.find(h => h.id === id);
+            if (!item) return;
+            
+            showToast('🔊 Replaying announcement...');
+            updateAudioStatus('Playing');
+            
+            if (item.isBilingual && item.textArabic && item.textEnglish) {
+                speakText(item.textArabic, 'ar', () => {
+                    setTimeout(() => {
+                        speakText(item.textEnglish, 'en', () => {
+                            updateAudioStatus('Ready');
+                        });
+                    }, 500);
+                });
+            } else if (item.textArabic) {
+                speakText(item.textArabic, 'ar', () => updateAudioStatus('Ready'));
+            } else {
+                speakText(item.textEnglish, 'en', () => updateAudioStatus('Ready'));
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('stat-total').textContent = stats.total;
+            document.getElementById('stat-completed').textContent = stats.completed;
+            document.getElementById('stat-queued').textContent = announcementQueue.length;
+        }
+
+        function getStatusColor(status) {
+            const colors = {
+                'queued': 'yellow',
+                'processing': 'blue',
+                'playing': 'blue',
+                'completed': 'green',
+                'failed': 'red'
+            };
+            return colors[status] || 'gray';
+        }
+
+        function getStatusIcon(status) {
+            const icons = {
+                'queued': '⏳',
+                'processing': '⚙️',
+                'playing': '▶️',
+                'completed': '✅',
+                'failed': '❌'
+            };
+            return icons[status] || '📢';
+        }
+
+        function formatTime(date) {
+            if (!date) return '';
+            return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function pauseQueue() {
+            isQueuePaused = !isQueuePaused;
+            const btn = document.getElementById('pauseBtn');
+            
+            if (isQueuePaused) {
+                btn.innerHTML = '▶️ Resume';
+                btn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+                btn.classList.add('bg-green-500', 'hover:bg-green-600');
+                showToast('⏸️ Queue paused', 'yellow');
+            } else {
+                btn.innerHTML = '⏸️ Pause';
+                btn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                btn.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
+                showToast('▶️ Queue resumed', 'green');
+            }
+        }
+
+        function clearQueue() {
+            if (confirm('Are you sure you want to clear the entire queue?')) {
+                announcementQueue = [];
+                stats.queued = 0;
+                updateStats();
+                updateQueue();
+                showToast('🗑️ Queue cleared', 'red');
+            }
+        }
+
+        function clearHistory() {
+            if (confirm('Are you sure you want to clear the history?')) {
+                historyItems = [];
+                updateHistory();
+                showToast('🗑️ History cleared', 'red');
+            }
+        }
+
+        function setupCharacterCounters() {
+            document.getElementById('textArabic').addEventListener('input', function(e) {
+                document.getElementById('arabicCount').textContent = e.target.value.length;
+            });
+            
+            document.getElementById('textEnglish').addEventListener('input', function(e) {
+                document.getElementById('englishCount').textContent = e.target.value.length;
+            });
+        }
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-blue-100', 'text-blue-700');
+                btn.classList.add('text-gray-600');
+            });
+            
+            document.getElementById('content-' + tabName).classList.remove('hidden');
+            
+            const activeBtn = document.getElementById('tab-' + tabName);
+            activeBtn.classList.add('active', 'bg-blue-100', 'text-blue-700');
+            activeBtn.classList.remove('text-gray-600');
+        }
+
+        function toggleLanguage() {
+            const html = document.documentElement;
+            const langBtn = document.getElementById('langBtn');
+            
+            if (html.getAttribute('dir') === 'rtl') {
+                html.setAttribute('dir', 'ltr');
+                html.setAttribute('lang', 'en');
+                langBtn.textContent = 'عربي';
+            } else {
+                html.setAttribute('dir', 'rtl');
+                html.setAttribute('lang', 'ar');
+                langBtn.textContent = 'English';
+            }
+        }
+
+        function showToast(message, color = 'green') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            toast.classList.remove('bg-green-600', 'bg-red-600', 'bg-blue-600', 'bg-yellow-600', 'bg-purple-600');
+            toast.classList.add(`bg-${color}-600`);
+            toastMessage.textContent = message;
+            toast.classList.remove('hidden');
+            
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        }
+
+        window.addEventListener('beforeunload', () => {
+            synth.cancel();
+        });
+    </script>
+</body>
+</html>
