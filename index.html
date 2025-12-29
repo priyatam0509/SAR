@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Railway Announcement System - AI Enhanced Demo</title>
+    <title>Railway Announcement System - Complete Demo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap');
@@ -74,6 +74,10 @@
             border-color: #3b82f6;
             background-color: #eff6ff;
         }
+
+        .paused {
+            opacity: 0.6;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -87,7 +91,7 @@
                     </svg>
                     <div>
                         <h1 class="text-xl font-bold">Railway Announcement System</h1>
-                        <p class="text-xs text-white/80">🤖 AI Translation + Voice Recognition</p>
+                        <p class="text-xs text-white/80">🤖 AI + Scheduling + Voice Recognition</p>
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">
@@ -95,7 +99,7 @@
                         🔊 Audio: <span id="audioStatus" class="font-bold">Ready</span>
                     </div>
                     <div class="glass px-3 py-1 rounded-lg text-sm">
-                        🌐 Translation: <span id="translationStatus" class="font-bold">Ready</span>
+                        Queue: <span id="queueStatusNav" class="font-bold">Running</span>
                     </div>
                     <button onclick="toggleLanguage()" class="glass px-4 py-2 rounded-lg hover:bg-white/20 transition">
                         <span id="langBtn">عربي</span>
@@ -117,6 +121,9 @@
                 <button onclick="showTab('announcements')" id="tab-announcements" class="tab-btn px-6 py-3 rounded-md font-medium transition whitespace-nowrap">
                     📢 Create Announcement
                 </button>
+                <button onclick="showTab('schedules')" id="tab-schedules" class="tab-btn px-6 py-3 rounded-md font-medium transition whitespace-nowrap">
+                    📅 Schedules
+                </button>
                 <button onclick="showTab('urgent')" id="tab-urgent" class="tab-btn px-6 py-3 rounded-md font-medium transition whitespace-nowrap">
                     🚨 Urgent
                 </button>
@@ -129,7 +136,7 @@
         <!-- Dashboard Tab -->
         <div id="content-dashboard" class="tab-content">
             <!-- Stats Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
                 <div class="bg-white rounded-xl shadow-md p-6 slide-in">
                     <div class="flex items-center justify-between">
                         <div>
@@ -169,10 +176,22 @@
                 <div class="bg-white rounded-xl shadow-md p-6 slide-in" style="animation-delay: 0.3s">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-gray-600 text-sm mb-1">Translations</p>
-                            <p class="text-3xl font-bold text-purple-600" id="stat-translations">0</p>
+                            <p class="text-gray-600 text-sm mb-1">Scheduled</p>
+                            <p class="text-3xl font-bold text-purple-600" id="stat-scheduled">0</p>
                         </div>
                         <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <span class="text-2xl">📅</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-md p-6 slide-in" style="animation-delay: 0.4s">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm mb-1">Translations</p>
+                            <p class="text-3xl font-bold text-indigo-600" id="stat-translations">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
                             <span class="text-2xl">🌐</span>
                         </div>
                     </div>
@@ -180,17 +199,17 @@
             </div>
 
             <!-- Real-time Queue -->
-            <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+            <div class="bg-white rounded-xl shadow-md p-6 mb-8" id="queueContainer">
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-xl font-bold text-gray-800 flex items-center">
                         <span class="mr-2">⏱️</span> Real-time Announcement Queue
                     </h2>
                     <div class="flex space-x-2">
-                        <button onclick="pauseQueue()" id="pauseBtn" class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition">
-                            ⏸️ Pause
+                        <button onclick="pauseQueue()" id="pauseBtn" class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition font-medium">
+                            ⏸️ Pause Queue
                         </button>
                         <button onclick="clearQueue()" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">
-                            🗑️ Clear
+                            🗑️ Clear Queue
                         </button>
                     </div>
                 </div>
@@ -198,6 +217,16 @@
                 <div class="space-y-4" id="queueList">
                     <div class="text-center text-gray-500 py-8">
                         Queue is empty. Create an announcement to get started!
+                    </div>
+                </div>
+            </div>
+
+            <!-- Next Scheduled -->
+            <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">📅 Next Scheduled Announcements</h3>
+                <div id="nextScheduled" class="space-y-3">
+                    <div class="text-center text-gray-500 py-4">
+                        No scheduled announcements
                     </div>
                 </div>
             </div>
@@ -237,7 +266,7 @@
                         <input type="text" id="destination" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Riyadh, Jeddah" required>
                     </div>
 
-                    <!-- English Text (Primary Input) -->
+                    <!-- English Text -->
                     <div>
                         <div class="flex items-center justify-between mb-2">
                             <label class="block text-sm font-medium text-gray-700">English Announcement (Type Here)</label>
@@ -249,7 +278,7 @@
                         <p class="text-sm text-gray-500 mt-1"><span id="englishCount">0</span>/500 characters</p>
                     </div>
 
-                    <!-- Arabic Text (Auto-translated) -->
+                    <!-- Arabic Text -->
                     <div>
                         <div class="flex items-center justify-between mb-2">
                             <label class="block text-sm font-medium text-gray-700">Arabic Announcement (Auto-Translated)</label>
@@ -267,7 +296,7 @@
                     <!-- Manual Edit Option -->
                     <div class="flex items-center space-x-3">
                         <input type="checkbox" id="manualEdit" onchange="toggleManualEdit()" class="w-5 h-5 text-blue-600 rounded">
-                        <label for="manualEdit" class="text-sm font-medium text-gray-700">Manually edit Arabic text (disable auto-translation)</label>
+                        <label for="manualEdit" class="text-sm font-medium text-gray-700">Manually edit Arabic text</label>
                     </div>
 
                     <!-- Bilingual Option -->
@@ -283,16 +312,91 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
-                            Create & Queue Announcement
+                            Create & Queue Now
                         </button>
                         <button type="button" onclick="previewAudio()" class="px-6 py-3 border-2 border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition flex items-center">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
                             </svg>
-                            Preview Audio
+                            Preview
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+
+        <!-- Schedules Tab -->
+        <div id="content-schedules" class="tab-content hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                <!-- Create Schedule Form -->
+                <div class="bg-white rounded-xl shadow-md p-8">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">📅 Create Schedule</h2>
+                    
+                    <form onsubmit="createSchedule(event)" class="space-y-6">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Platform</label>
+                                <input type="text" id="sched-platform" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="5" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Train Number</label>
+                                <input type="text" id="sched-train" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="123" required>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Destination</label>
+                            <input type="text" id="sched-destination" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="Riyadh" required>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                                <input type="date" id="sched-date" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Time</label>
+                                <input type="time" id="sched-time" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" required>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">English Announcement</label>
+                            <textarea id="sched-english" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="Train announcement..." required></textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Arabic Announcement</label>
+                            <textarea id="sched-arabic" dir="rtl" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 bg-gray-50" placeholder="إعلان القطار..." readonly></textarea>
+                        </div>
+
+                        <div class="flex items-center space-x-3">
+                            <input type="checkbox" id="sched-repeat" class="w-5 h-5 text-purple-600 rounded">
+                            <label for="sched-repeat" class="text-sm font-medium text-gray-700">Repeat Daily</label>
+                        </div>
+
+                        <button type="submit" class="w-full bg-purple-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-purple-700 transition">
+                            📅 Schedule Announcement
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Active Schedules List -->
+                <div class="bg-white rounded-xl shadow-md p-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800">Active Schedules</h2>
+                        <button onclick="clearAllSchedules()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm">
+                            Clear All
+                        </button>
+                    </div>
+                    
+                    <div id="schedulesList" class="space-y-4">
+                        <div class="text-center text-gray-500 py-8">
+                            No schedules yet. Create one to get started!
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -311,7 +415,7 @@
             <div class="bg-white rounded-xl shadow-md p-8">
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">Create Urgent Announcement</h2>
                 
-                <!-- Language Selection for Voice -->
+                <!-- Language Selection -->
                 <div class="mb-6">
                     <label class="block text-sm font-medium text-gray-700 mb-3">Voice Input Language</label>
                     <div class="grid grid-cols-2 gap-4">
@@ -370,7 +474,6 @@
                     </button>
                 </div>
 
-                <!-- History List -->
                 <div class="space-y-4" id="historyList">
                     <div class="text-center text-gray-500 py-8">
                         No announcements yet. Create one to see it here!
@@ -380,7 +483,7 @@
         </div>
     </div>
 
-    <!-- Success Toast -->
+    <!-- Toast -->
     <div id="toast" class="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-4 rounded-lg shadow-lg hidden z-50">
         <div class="flex items-center">
             <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -394,14 +497,17 @@
         // Global state
         let announcementQueue = [];
         let historyItems = [];
+        let schedules = [];
         let isQueuePaused = false;
         let isProcessing = false;
         let nextId = 1;
+        let nextScheduleId = 1;
         let translationCount = 0;
         let autoTranslateEnabled = true;
         let currentVoiceLang = 'en';
+        let queueProcessorInterval = null;
+        let scheduleCheckInterval = null;
         
-        // Statistics
         let stats = {
             total: 0,
             completed: 0,
@@ -409,65 +515,38 @@
             failed: 0
         };
 
-        // Text-to-Speech setup
         const synth = window.speechSynthesis;
         let voices = [];
 
-        // Voice recognition setup
-        let recognition;
-        let urgentRecognition;
+        let recognition, urgentRecognition;
         let isRecording = false;
         let isUrgentRecording = false;
 
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            
-            // Regular voice recognition
             recognition = new SpeechRecognition();
             recognition.continuous = false;
             recognition.interimResults = false;
-            
-            // Urgent voice recognition
             urgentRecognition = new SpeechRecognition();
             urgentRecognition.continuous = false;
             urgentRecognition.interimResults = false;
         }
 
-        // Simple translation dictionary (English to Arabic)
         const translationDict = {
-            'train': 'القطار',
-            'number': 'رقم',
-            'platform': 'الرصيف',
-            'will arrive': 'سيصل',
-            'will depart': 'سيغادر',
-            'to': 'إلى',
-            'from': 'من',
-            'at': 'في',
-            'in': 'خلال',
-            'minutes': 'دقائق',
-            'heading': 'المتجه',
-            'riyadh': 'الرياض',
-            'jeddah': 'جدة',
-            'dammam': 'الدمام',
-            'makkah': 'مكة',
-            'madinah': 'المدينة',
-            'delayed': 'متأخر',
-            'cancelled': 'ملغى',
-            'please': 'من فضلك',
-            'attention': 'انتباه',
-            'passengers': 'الركاب',
-            'emergency': 'طارئ',
-            'change': 'تغيير',
-            'now': 'الآن',
-            'ready': 'جاهز',
-            'boarding': 'الصعود'
+            'train': 'القطار', 'number': 'رقم', 'platform': 'الرصيف',
+            'will arrive': 'سيصل', 'will depart': 'سيغادر',
+            'to': 'إلى', 'from': 'من', 'at': 'في', 'in': 'خلال',
+            'minutes': 'دقائق', 'heading': 'المتجه',
+            'riyadh': 'الرياض', 'jeddah': 'جدة', 'dammam': 'الدمام',
+            'makkah': 'مكة', 'madinah': 'المدينة',
+            'delayed': 'متأخر', 'cancelled': 'ملغى',
+            'please': 'من فضلك', 'attention': 'انتباه',
+            'passengers': 'الركاب', 'emergency': 'طارئ',
+            'change': 'تغيير', 'now': 'الآن', 'ready': 'جاهز', 'boarding': 'الصعود'
         };
 
-        // Load voices
         function loadVoices() {
             voices = synth.getVoices();
-            console.log('Available voices:', voices.length);
-            
             if (voices.length > 0) {
                 updateAudioStatus('Ready');
             }
@@ -478,12 +557,22 @@
             speechSynthesis.onvoiceschanged = loadVoices;
         }
 
-        // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             setupCharacterCounters();
             setupAutoTranslation();
+            setupScheduleTranslation();
             startQueueProcessor();
+            startScheduleChecker();
+            setDefaultDateTime();
         });
+
+        function setDefaultDateTime() {
+            const now = new Date();
+            const today = now.toISOString().split('T')[0];
+            const currentTime = now.toTimeString().slice(0, 5);
+            document.getElementById('sched-date').value = today;
+            document.getElementById('sched-time').value = currentTime;
+        }
 
         function setupAutoTranslation() {
             const englishInput = document.getElementById('textEnglish');
@@ -491,51 +580,63 @@
 
             englishInput.addEventListener('input', function(e) {
                 if (!autoTranslateEnabled) return;
-
                 clearTimeout(translationTimeout);
-                
                 const indicator = document.getElementById('translationIndicator');
                 indicator.classList.remove('hidden');
-                updateTranslationStatus('Translating...');
 
                 translationTimeout = setTimeout(() => {
                     const englishText = e.target.value;
                     if (englishText.trim()) {
-                        translateToArabic(englishText);
+                        translateToArabic(englishText, 'textArabic', 'arabicCount');
                     } else {
                         document.getElementById('textArabic').value = '';
                         indicator.classList.add('hidden');
-                        updateTranslationStatus('Ready');
                     }
                 }, 500);
             });
         }
 
-        function translateToArabic(englishText) {
-            const indicator = document.getElementById('translationIndicator');
-            const arabicInput = document.getElementById('textArabic');
-            
-            // Simple translation using dictionary
+        function setupScheduleTranslation() {
+            const schedEngInput = document.getElementById('sched-english');
+            let schedTransTimeout;
+
+            schedEngInput.addEventListener('input', function(e) {
+                clearTimeout(schedTransTimeout);
+                schedTransTimeout = setTimeout(() => {
+                    const englishText = e.target.value;
+                    if (englishText.trim()) {
+                        translateToArabic(englishText, 'sched-arabic', null, false);
+                    } else {
+                        document.getElementById('sched-arabic').value = '';
+                    }
+                }, 500);
+            });
+        }
+
+        function translateToArabic(englishText, targetId, countId, showToast = true) {
             let translated = englishText.toLowerCase();
             
-            // Replace known words
             for (let [eng, ar] of Object.entries(translationDict)) {
                 const regex = new RegExp(eng, 'gi');
                 translated = translated.replace(regex, ar);
             }
             
-            // Convert numbers to Arabic numerals
             translated = convertToArabicNumerals(translated);
             
-            arabicInput.value = translated;
-            document.getElementById('arabicCount').textContent = translated.length;
+            document.getElementById(targetId).value = translated;
+            if (countId) {
+                document.getElementById(countId).textContent = translated.length;
+            }
             
-            indicator.classList.add('hidden');
-            updateTranslationStatus('Ready');
+            const indicator = document.getElementById('translationIndicator');
+            if (indicator) indicator.classList.add('hidden');
+            
             translationCount++;
             updateTranslationCount();
             
-            showToast('✅ Translated to Arabic', 'green');
+            if (showToast) {
+                showToast('✅ Translated to Arabic', 'green');
+            }
         }
 
         function convertToArabicNumerals(text) {
@@ -563,7 +664,7 @@
 
         function useVoiceInput(lang, targetId) {
             if (!recognition) {
-                showToast('Voice recognition not supported in this browser', 'red');
+                showToast('Voice recognition not supported', 'red');
                 return;
             }
 
@@ -573,58 +674,48 @@
                 const transcript = event.results[0][0].transcript;
                 document.getElementById(targetId).value = transcript;
                 
-                // Update character count
                 if (targetId === 'textEnglish') {
                     document.getElementById('englishCount').textContent = transcript.length;
-                    // Trigger auto-translation
                     if (autoTranslateEnabled) {
-                        translateToArabic(transcript);
+                        translateToArabic(transcript, 'textArabic', 'arabicCount');
                     }
                 } else {
                     document.getElementById('arabicCount').textContent = transcript.length;
                 }
                 
-                showToast(`✅ Voice recognized (${lang === 'ar' ? 'Arabic' : 'English'}): ${transcript.substring(0, 50)}...`);
+                showToast(`✅ Voice recognized (${lang.toUpperCase()})`);
             };
             
-            recognition.onerror = (event) => {
-                console.error('Speech recognition error:', event.error);
-                showToast('Voice recognition error. Please try again.', 'red');
+            recognition.onerror = () => {
+                showToast('Voice recognition error', 'red');
             };
             
             recognition.start();
-            showToast(`🎤 Listening in ${lang === 'ar' ? 'Arabic' : 'English'}... Speak now!`, 'blue');
+            showToast(`🎤 Listening in ${lang.toUpperCase()}...`, 'blue');
         }
 
         function setVoiceLang(lang) {
             currentVoiceLang = lang;
             
-            // Update button styles
-            document.getElementById('voiceLangEn').classList.toggle('border-blue-600', lang === 'en');
-            document.getElementById('voiceLangEn').classList.toggle('bg-blue-50', lang === 'en');
-            document.getElementById('voiceLangEn').classList.toggle('text-blue-700', lang === 'en');
-            document.getElementById('voiceLangEn').classList.toggle('border-gray-300', lang !== 'en');
+            document.getElementById('voiceLangEn').className = lang === 'en' 
+                ? 'p-4 border-2 border-blue-600 bg-blue-50 text-blue-700 rounded-lg font-medium hover:bg-blue-100 transition'
+                : 'p-4 border-2 border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition';
             
-            document.getElementById('voiceLangAr').classList.toggle('border-green-600', lang === 'ar');
-            document.getElementById('voiceLangAr').classList.toggle('bg-green-50', lang === 'ar');
-            document.getElementById('voiceLangAr').classList.toggle('text-green-700', lang === 'ar');
-            document.getElementById('voiceLangAr').classList.toggle('border-gray-300', lang !== 'ar');
+            document.getElementById('voiceLangAr').className = lang === 'ar'
+                ? 'p-4 border-2 border-green-600 bg-green-50 text-green-700 rounded-lg font-medium hover:bg-green-100 transition'
+                : 'p-4 border-2 border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition';
             
-            // Update language indicator
             document.getElementById('urgentVoiceLang').textContent = 
                 `Language: ${lang === 'ar' ? 'Arabic (العربية)' : 'English'}`;
             
-            // Set recognition language
             if (urgentRecognition) {
                 urgentRecognition.lang = lang === 'ar' ? 'ar-SA' : 'en-US';
             }
-            
-            showToast(`Voice language set to ${lang === 'ar' ? 'Arabic' : 'English'}`, 'blue');
         }
 
         function toggleUrgentRecording() {
             if (!urgentRecognition) {
-                showToast('Voice recognition not supported in this browser', 'red');
+                showToast('Voice recognition not supported', 'red');
                 return;
             }
             
@@ -635,12 +726,11 @@
                 urgentRecognition.onresult = (event) => {
                     const transcript = event.results[0][0].transcript;
                     document.getElementById('urgentText').value = transcript;
-                    showToast(`✅ Recognized (${currentVoiceLang === 'ar' ? 'Arabic' : 'English'}): ${transcript.substring(0, 50)}...`);
+                    showToast(`✅ Recognized: ${transcript.substring(0, 50)}...`);
                 };
                 
-                urgentRecognition.onerror = (event) => {
-                    console.error('Speech recognition error:', event.error);
-                    showToast('Voice recognition error. Please try typing instead.', 'red');
+                urgentRecognition.onerror = () => {
+                    showToast('Voice recognition error', 'red');
                     stopUrgentRecording();
                 };
                 
@@ -655,25 +745,14 @@
 
         function startUrgentRecording() {
             isUrgentRecording = true;
-            const btn = document.getElementById('urgentRecordBtn');
-            const status = document.getElementById('urgentRecordStatus');
-            
-            btn.classList.add('recording');
-            status.textContent = '🔴 Recording... Click to stop';
-            showToast(`🎤 Recording in ${currentVoiceLang === 'ar' ? 'Arabic' : 'English'}... Speak now!`, 'blue');
+            document.getElementById('urgentRecordBtn').classList.add('recording');
+            document.getElementById('urgentRecordStatus').textContent = '🔴 Recording... Click to stop';
         }
 
         function stopUrgentRecording() {
             isUrgentRecording = false;
-            const btn = document.getElementById('urgentRecordBtn');
-            const status = document.getElementById('urgentRecordStatus');
-            
-            btn.classList.remove('recording');
-            status.textContent = 'Click microphone to start';
-        }
-
-        function updateTranslationStatus(status) {
-            document.getElementById('translationStatus').textContent = status;
+            document.getElementById('urgentRecordBtn').classList.remove('recording');
+            document.getElementById('urgentRecordStatus').textContent = 'Click microphone to start';
         }
 
         function updateAudioStatus(status) {
@@ -687,21 +766,14 @@
         function createAnnouncement(e) {
             e.preventDefault();
             
-            const platform = document.getElementById('platform').value;
-            const trainNumber = document.getElementById('trainNumber').value;
-            const destination = document.getElementById('destination').value;
-            const textArabic = document.getElementById('textArabic').value;
-            const textEnglish = document.getElementById('textEnglish').value;
-            const isBilingual = document.getElementById('bilingual').checked;
-            
             const announcement = {
                 id: nextId++,
-                platform,
-                trainNumber,
-                destination,
-                textArabic,
-                textEnglish,
-                isBilingual,
+                platform: document.getElementById('platform').value,
+                trainNumber: document.getElementById('trainNumber').value,
+                destination: document.getElementById('destination').value,
+                textArabic: document.getElementById('textArabic').value,
+                textEnglish: document.getElementById('textEnglish').value,
+                isBilingual: document.getElementById('bilingual').checked,
                 status: 'queued',
                 createdAt: new Date(),
                 priority: 'normal'
@@ -714,15 +786,168 @@
             updateStats();
             updateQueue();
             
-            showToast(`✅ Announcement queued for Platform ${platform}, Train ${trainNumber}`);
+            showToast(`✅ Announcement queued for Platform ${announcement.platform}`);
             
-            // Reset form
             e.target.reset();
             document.getElementById('arabicCount').textContent = '0';
             document.getElementById('englishCount').textContent = '0';
             
-            // Switch to dashboard
             showTab('dashboard');
+        }
+
+        function createSchedule(e) {
+            e.preventDefault();
+            
+            const schedule = {
+                id: nextScheduleId++,
+                platform: document.getElementById('sched-platform').value,
+                trainNumber: document.getElementById('sched-train').value,
+                destination: document.getElementById('sched-destination').value,
+                date: document.getElementById('sched-date').value,
+                time: document.getElementById('sched-time').value,
+                textEnglish: document.getElementById('sched-english').value,
+                textArabic: document.getElementById('sched-arabic').value,
+                repeat: document.getElementById('sched-repeat').checked,
+                active: true,
+                createdAt: new Date()
+            };
+            
+            schedules.push(schedule);
+            updateSchedulesList();
+            updateStats();
+            updateNextScheduled();
+            
+            showToast(`✅ Schedule created for ${schedule.date} at ${schedule.time}`);
+            
+            e.target.reset();
+            setDefaultDateTime();
+        }
+
+        function deleteSchedule(id) {
+            if (confirm('Delete this schedule?')) {
+                schedules = schedules.filter(s => s.id !== id);
+                updateSchedulesList();
+                updateStats();
+                updateNextScheduled();
+                showToast('Schedule deleted', 'red');
+            }
+        }
+
+        function clearAllSchedules() {
+            if (confirm('Clear all schedules?')) {
+                schedules = [];
+                updateSchedulesList();
+                updateStats();
+                updateNextScheduled();
+                showToast('All schedules cleared', 'red');
+            }
+        }
+
+        function updateSchedulesList() {
+            const list = document.getElementById('schedulesList');
+            
+            if (schedules.length === 0) {
+                list.innerHTML = '<div class="text-center text-gray-500 py-8">No schedules yet. Create one to get started!</div>';
+                return;
+            }
+            
+            list.innerHTML = schedules.map(s => `
+                <div class="p-4 border rounded-lg hover:bg-gray-50">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <p class="font-bold text-gray-800">Platform ${s.platform} - Train ${s.trainNumber}</p>
+                            <p class="text-sm text-gray-600">→ ${s.destination}</p>
+                        </div>
+                        <button onclick="deleteSchedule(${s.id})" class="text-red-600 hover:text-red-700">
+                            🗑️
+                        </button>
+                    </div>
+                    <div class="text-sm text-gray-600">
+                        <p>📅 ${s.date} at ${s.time}</p>
+                        <p class="mt-1">${s.textEnglish}</p>
+                        ${s.repeat ? '<p class="text-purple-600 mt-1">🔄 Repeats Daily</p>' : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateNextScheduled() {
+            const now = new Date();
+            const upcoming = schedules
+                .map(s => ({
+                    ...s,
+                    scheduledTime: new Date(`${s.date}T${s.time}`)
+                }))
+                .filter(s => s.scheduledTime > now)
+                .sort((a, b) => a.scheduledTime - b.scheduledTime)
+                .slice(0, 3);
+            
+            const container = document.getElementById('nextScheduled');
+            
+            if (upcoming.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-500 py-4">No upcoming scheduled announcements</div>';
+                return;
+            }
+            
+            container.innerHTML = upcoming.map(s => `
+                <div class="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <span class="text-lg">📅</span>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-800">Platform ${s.platform} - Train ${s.trainNumber}</p>
+                            <p class="text-sm text-gray-600">${formatDateTime(s.scheduledTime)}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function startScheduleChecker() {
+            scheduleCheckInterval = setInterval(() => {
+                const now = new Date();
+                
+                schedules.forEach(schedule => {
+                    const scheduledTime = new Date(`${schedule.date}T${schedule.time}`);
+                    const diff = scheduledTime - now;
+                    
+                    // Trigger if within 10 seconds
+                    if (diff > 0 && diff <= 10000 && schedule.active) {
+                        triggerScheduledAnnouncement(schedule);
+                        if (!schedule.repeat) {
+                            schedule.active = false;
+                        }
+                    }
+                });
+                
+                updateNextScheduled();
+            }, 5000);
+        }
+
+        function triggerScheduledAnnouncement(schedule) {
+            const announcement = {
+                id: nextId++,
+                platform: schedule.platform,
+                trainNumber: schedule.trainNumber,
+                destination: schedule.destination,
+                textArabic: schedule.textArabic,
+                textEnglish: schedule.textEnglish,
+                isBilingual: true,
+                status: 'queued',
+                createdAt: new Date(),
+                priority: 'scheduled',
+                scheduledId: schedule.id
+            };
+            
+            announcementQueue.push(announcement);
+            stats.total++;
+            stats.queued++;
+            
+            updateStats();
+            updateQueue();
+            
+            showToast(`📅 Scheduled announcement triggered for Train ${schedule.trainNumber}`, 'purple');
         }
 
         function previewAudio() {
@@ -735,7 +960,7 @@
                 return;
             }
             
-            showToast('🔊 Playing audio preview...', 'blue');
+            showToast('🔊 Playing preview...', 'blue');
             updateAudioStatus('Playing');
             
             if (isBilingual && textArabic && textEnglish) {
@@ -773,13 +998,10 @@
             utterance.volume = 1;
             
             const voice = voices.find(v => v.lang.startsWith(lang)) || voices[0];
-            if (voice) {
-                utterance.voice = voice;
-            }
+            if (voice) utterance.voice = voice;
             
             utterance.onend = callback;
             utterance.onerror = () => {
-                console.error('Speech synthesis error');
                 if (callback) callback();
             };
             
@@ -787,7 +1009,7 @@
         }
 
         function startQueueProcessor() {
-            setInterval(() => {
+            queueProcessorInterval = setInterval(() => {
                 if (!isQueuePaused && !isProcessing && announcementQueue.length > 0) {
                     processNextAnnouncement();
                 }
@@ -795,7 +1017,7 @@
         }
 
         async function processNextAnnouncement() {
-            if (announcementQueue.length === 0 || isProcessing) return;
+            if (announcementQueue.length === 0 || isProcessing || isQueuePaused) return;
             
             isProcessing = true;
             const announcement = announcementQueue[0];
@@ -805,7 +1027,7 @@
             updateStats();
             updateQueue();
             
-            showToast(`⚙️ Processing announcement for Platform ${announcement.platform}`);
+            showToast(`⚙️ Processing Platform ${announcement.platform}`);
             updateAudioStatus('Processing');
             
             await new Promise(resolve => setTimeout(resolve, 1000));
@@ -844,9 +1066,34 @@
             updateHistory();
             updateAudioStatus('Ready');
             
-            showToast(`✅ Announcement completed for Platform ${announcement.platform}`, 'green');
+            showToast(`✅ Completed Platform ${announcement.platform}`, 'green');
             
             isProcessing = false;
+        }
+
+        function pauseQueue() {
+            isQueuePaused = !isQueuePaused;
+            const btn = document.getElementById('pauseBtn');
+            const statusNav = document.getElementById('queueStatusNav');
+            const container = document.getElementById('queueContainer');
+            
+            if (isQueuePaused) {
+                btn.innerHTML = '▶️ Resume Queue';
+                btn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
+                btn.classList.add('bg-green-500', 'hover:bg-green-600');
+                statusNav.textContent = 'Paused';
+                statusNav.classList.add('text-red-400');
+                container.classList.add('paused');
+                showToast('⏸️ Queue PAUSED - Announcements stopped', 'yellow');
+            } else {
+                btn.innerHTML = '⏸️ Pause Queue';
+                btn.classList.remove('bg-green-500', 'hover:bg-green-600');
+                btn.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
+                statusNav.textContent = 'Running';
+                statusNav.classList.remove('text-red-400');
+                container.classList.remove('paused');
+                showToast('▶️ Queue RESUMED - Processing continues', 'green');
+            }
         }
 
         function broadcastUrgent() {
@@ -854,7 +1101,7 @@
             const platform = document.getElementById('urgentPlatform').value || 'ALL';
             
             if (!text) {
-                showToast('⚠️ Please enter an urgent message', 'red');
+                showToast('⚠️ Please enter urgent message', 'red');
                 return;
             }
             
@@ -878,12 +1125,30 @@
             updateStats();
             updateQueue();
             
-            showToast('🚨 URGENT ANNOUNCEMENT QUEUED - Broadcasting immediately!', 'red');
+            showToast('🚨 URGENT ANNOUNCEMENT QUEUED!', 'red');
             
             document.getElementById('urgentText').value = '';
             document.getElementById('urgentPlatform').value = '';
             
             showTab('dashboard');
+        }
+
+        function clearQueue() {
+            if (confirm('Clear entire queue?')) {
+                announcementQueue = [];
+                stats.queued = 0;
+                updateStats();
+                updateQueue();
+                showToast('Queue cleared', 'red');
+            }
+        }
+
+        function clearHistory() {
+            if (confirm('Clear history?')) {
+                historyItems = [];
+                updateHistory();
+                showToast('History cleared', 'red');
+            }
         }
 
         function updateQueue() {
@@ -937,11 +1202,9 @@
                             <p class="text-xs text-gray-500">${formatTime(item.completedAt || item.createdAt)}</p>
                         </div>
                     </div>
-                    <div class="flex items-center space-x-2">
-                        <button onclick="replayAnnouncement(${item.id})" class="p-2 hover:bg-gray-100 rounded" title="Replay">
-                            🔊
-                        </button>
-                    </div>
+                    <button onclick="replayAnnouncement(${item.id})" class="p-2 hover:bg-gray-100 rounded" title="Replay">
+                        🔊
+                    </button>
                 </div>
             `).join('');
         }
@@ -950,7 +1213,7 @@
             const item = historyItems.find(h => h.id === id);
             if (!item) return;
             
-            showToast('🔊 Replaying announcement...');
+            showToast('🔊 Replaying...');
             updateAudioStatus('Playing');
             
             if (item.isBilingual && item.textArabic && item.textEnglish) {
@@ -972,26 +1235,21 @@
             document.getElementById('stat-total').textContent = stats.total;
             document.getElementById('stat-completed').textContent = stats.completed;
             document.getElementById('stat-queued').textContent = announcementQueue.length;
+            document.getElementById('stat-scheduled').textContent = schedules.filter(s => s.active).length;
         }
 
         function getStatusColor(status) {
             const colors = {
-                'queued': 'yellow',
-                'processing': 'blue',
-                'playing': 'blue',
-                'completed': 'green',
-                'failed': 'red'
+                'queued': 'yellow', 'processing': 'blue', 'playing': 'blue',
+                'completed': 'green', 'failed': 'red'
             };
             return colors[status] || 'gray';
         }
 
         function getStatusIcon(status) {
             const icons = {
-                'queued': '⏳',
-                'processing': '⚙️',
-                'playing': '▶️',
-                'completed': '✅',
-                'failed': '❌'
+                'queued': '⏳', 'processing': '⚙️', 'playing': '▶️',
+                'completed': '✅', 'failed': '❌'
             };
             return icons[status] || '📢';
         }
@@ -1001,39 +1259,11 @@
             return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
         }
 
-        function pauseQueue() {
-            isQueuePaused = !isQueuePaused;
-            const btn = document.getElementById('pauseBtn');
-            
-            if (isQueuePaused) {
-                btn.innerHTML = '▶️ Resume';
-                btn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
-                btn.classList.add('bg-green-500', 'hover:bg-green-600');
-                showToast('⏸️ Queue paused', 'yellow');
-            } else {
-                btn.innerHTML = '⏸️ Pause';
-                btn.classList.remove('bg-green-500', 'hover:bg-green-600');
-                btn.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
-                showToast('▶️ Queue resumed', 'green');
-            }
-        }
-
-        function clearQueue() {
-            if (confirm('Are you sure you want to clear the entire queue?')) {
-                announcementQueue = [];
-                stats.queued = 0;
-                updateStats();
-                updateQueue();
-                showToast('🗑️ Queue cleared', 'red');
-            }
-        }
-
-        function clearHistory() {
-            if (confirm('Are you sure you want to clear the history?')) {
-                historyItems = [];
-                updateHistory();
-                showToast('🗑️ History cleared', 'red');
-            }
+        function formatDateTime(date) {
+            return date.toLocaleString('en-US', { 
+                month: 'short', day: 'numeric', 
+                hour: '2-digit', minute: '2-digit' 
+            });
         }
 
         function setupCharacterCounters() {
@@ -1047,17 +1277,13 @@
         }
 
         function showTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.add('hidden');
-            });
-            
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.add('hidden'));
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.remove('active', 'bg-blue-100', 'text-blue-700');
                 btn.classList.add('text-gray-600');
             });
             
             document.getElementById('content-' + tabName).classList.remove('hidden');
-            
             const activeBtn = document.getElementById('tab-' + tabName);
             activeBtn.classList.add('active', 'bg-blue-100', 'text-blue-700');
             activeBtn.classList.remove('text-gray-600');
@@ -1069,11 +1295,9 @@
             
             if (html.getAttribute('dir') === 'rtl') {
                 html.setAttribute('dir', 'ltr');
-                html.setAttribute('lang', 'en');
                 langBtn.textContent = 'عربي';
             } else {
                 html.setAttribute('dir', 'rtl');
-                html.setAttribute('lang', 'ar');
                 langBtn.textContent = 'English';
             }
         }
@@ -1082,18 +1306,17 @@
             const toast = document.getElementById('toast');
             const toastMessage = document.getElementById('toastMessage');
             
-            toast.classList.remove('bg-green-600', 'bg-red-600', 'bg-blue-600', 'bg-yellow-600', 'bg-purple-600');
-            toast.classList.add(`bg-${color}-600`);
+            toast.className = `fixed bottom-4 right-4 bg-${color}-600 text-white px-6 py-4 rounded-lg shadow-lg z-50`;
             toastMessage.textContent = message;
             toast.classList.remove('hidden');
             
-            setTimeout(() => {
-                toast.classList.add('hidden');
-            }, 3000);
+            setTimeout(() => toast.classList.add('hidden'), 3000);
         }
 
         window.addEventListener('beforeunload', () => {
             synth.cancel();
+            if (queueProcessorInterval) clearInterval(queueProcessorInterval);
+            if (scheduleCheckInterval) clearInterval(scheduleCheckInterval);
         });
     </script>
 </body>
