@@ -1,12 +1,85 @@
 <!DOCTYPE html>
+<!--
+=====================================================
+SAR RAILWAY ANNOUNCEMENT SYSTEM
+with ElevenLabs AI Voice Integration
+=====================================================
+
+FEATURES:
+- 🎤 High-quality AI voices (ElevenLabs multilingual_v2)
+- 🌐 Auto-translation (English → Arabic)
+- 📅 Complete scheduling system (Hourly, Daily, Weekly, Monthly)
+- 🎙️ Voice recognition (English & Arabic)
+- ⏸️ Queue management with pause/resume
+- 🚨 Urgent announcements
+- 📊 Real-time statistics
+- 🔄 Automatic repeat scheduling
+- 🎨 SAR Railways branded interface
+
+ELEVENLABS CONFIGURATION:
+1. API Key: Already configured in the code (line ~77)
+   - Current: sk_a526ef0f2a418cf57d24448c42394ce179e3edc9956e3ee2
+   - To change: Update ELEVENLABS_API_KEY constant
+
+2. Voice IDs: Configured for multilingual support (line ~81)
+   - English: Xb7hH8MSUJpSbSDYk0k2 (Custom voice)
+   - Arabic: Same voice (supports multilingual_v2)
+   - To change voices: Update VOICE_IDS object
+
+3. Model: Using 'eleven_multilingual_v2' for Arabic + English
+
+TOGGLE TTS ENGINE:
+- Click "🎤 ElevenLabs AI" button in System Status section
+- Switches between ElevenLabs and Browser TTS
+- ElevenLabs = High quality professional audio
+- Browser TTS = Free fallback option
+
+VOICE SETTINGS:
+- Stability: 0.5 (balanced)
+- Similarity Boost: 0.75 (higher quality)
+- Speaker Boost: Enabled
+- Format: MP3 44.1kHz
+
+PRE-LOADED SCHEDULES:
+- 2 Hourly announcements
+- 4 Daily announcements  
+- 2 Weekly announcements
+- 2 Monthly announcements
+
+REQUIREMENTS:
+- Modern browser (Chrome/Edge recommended)
+- Internet connection (for ElevenLabs API)
+- Works offline with Browser TTS fallback
+
+USAGE:
+1. Open file in browser
+2. System loads with ElevenLabs enabled
+3. Create announcements or use pre-loaded schedules
+4. Audio plays automatically with high-quality AI voices
+
+TROUBLESHOOTING:
+- Check browser console (F12) for API logs
+- If ElevenLabs fails, system auto-falls back to Browser TTS
+- Toggle engine in System Status if needed
+
+© 2025 Saudi Arabia Railways
+=====================================================
+-->
 <html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Railway Announcement System - Complete Demo</title>
+    <title>SAR - Railway Announcement System</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap');
+        
+        :root {
+            --sar-teal: #007A87;
+            --sar-gray: #3F3F3F;
+            --sar-light-teal: #E0F2F4;
+            --sar-dark-teal: #005A64;
+        }
         
         * {
             font-family: 'Inter', 'Cairo', sans-serif;
@@ -17,14 +90,8 @@
         }
         
         @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
         .slide-in {
@@ -32,14 +99,8 @@
         }
         
         @keyframes pulse-ring {
-            0% {
-                transform: scale(0.9);
-                opacity: 1;
-            }
-            100% {
-                transform: scale(1.3);
-                opacity: 0;
-            }
+            0% { transform: scale(0.9); opacity: 1; }
+            100% { transform: scale(1.3); opacity: 0; }
         }
         
         .recording {
@@ -56,12 +117,12 @@
             animation: pulse-ring 1.5s ease-out infinite;
         }
         
-        .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .sar-gradient {
+            background: linear-gradient(135deg, var(--sar-teal) 0%, var(--sar-dark-teal) 100%);
         }
         
         .glass {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
@@ -70,40 +131,51 @@
             animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
         }
         
-        .translating {
-            border-color: #3b82f6;
-            background-color: #eff6ff;
-        }
-
         .paused {
             opacity: 0.6;
+        }
+
+        .sar-button {
+            background: var(--sar-teal);
+            color: white;
+        }
+
+        .sar-button:hover {
+            background: var(--sar-dark-teal);
+        }
+
+        .sar-badge {
+            background: var(--sar-light-teal);
+            color: var(--sar-teal);
         }
     </style>
 </head>
 <body class="bg-gray-50">
-    <!-- Navigation Bar -->
-    <nav class="gradient-bg text-white shadow-lg">
+    <!-- Navigation Bar with SAR Branding -->
+    <nav class="sar-gradient text-white shadow-lg">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <div class="flex items-center space-x-3">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
-                    </svg>
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center space-x-4">
+                    <div class="bg-white rounded-lg p-2">
+                        <img src="sar-logo.png" alt="SAR Logo" class="h-12 w-auto">
+                    </div>
                     <div>
-                        <h1 class="text-xl font-bold">Railway Announcement System</h1>
-                        <p class="text-xs text-white/80">🤖 AI + Scheduling + Voice Recognition</p>
+                        <h1 class="text-2xl font-bold">Railway Announcement System</h1>
                     </div>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <div class="glass px-3 py-1 rounded-lg text-sm">
-                        🔊 Audio: <span id="audioStatus" class="font-bold">Ready</span>
-                    </div>
-                    <div class="glass px-3 py-1 rounded-lg text-sm">
-                        Queue: <span id="queueStatusNav" class="font-bold">Running</span>
+                    <div class="glass px-4 py-2 rounded-lg text-sm">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></span>
+                            <span id="systemStatus" class="font-bold">LIVE</span>
+                        </div>
                     </div>
                     <button onclick="toggleLanguage()" class="glass px-4 py-2 rounded-lg hover:bg-white/20 transition">
                         <span id="langBtn">عربي</span>
                     </button>
+                    <div class="glass px-4 py-2 rounded-lg">
+                        <div id="currentTime" class="font-mono text-sm"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -118,14 +190,17 @@
                 <button onclick="showTab('dashboard')" id="tab-dashboard" class="tab-btn active px-6 py-3 rounded-md font-medium transition whitespace-nowrap">
                     📊 Dashboard
                 </button>
-                <button onclick="showTab('announcements')" id="tab-announcements" class="tab-btn px-6 py-3 rounded-md font-medium transition whitespace-nowrap">
-                    📢 Create Announcement
+                <button onclick="showTab('schedule-view')" id="tab-schedule-view" class="tab-btn px-6 py-3 rounded-md font-medium transition whitespace-nowrap">
+                    🚆 Schedules
                 </button>
-                <button onclick="showTab('schedules')" id="tab-schedules" class="tab-btn px-6 py-3 rounded-md font-medium transition whitespace-nowrap">
-                    📅 Schedules
+                <button onclick="showTab('schedule-create')" id="tab-schedule-create" class="tab-btn px-6 py-3 rounded-md font-medium transition whitespace-nowrap">
+                    ➕ Create Schedule
                 </button>
-                <button onclick="showTab('urgent')" id="tab-urgent" class="tab-btn px-6 py-3 rounded-md font-medium transition whitespace-nowrap">
-                    🚨 Urgent
+                <button onclick="showTab('announcement')" id="tab-announcement" class="tab-btn px-6 py-3 rounded-md font-medium transition whitespace-nowrap">
+                    📢 Announcement
+                </button>
+                <button onclick="showTab('live-announcement')" id="tab-live-announcement" class="tab-btn px-6 py-3 rounded-md font-medium transition whitespace-nowrap">
+                    🎙️ Live Announcement
                 </button>
                 <button onclick="showTab('history')" id="tab-history" class="tab-btn px-6 py-3 rounded-md font-medium transition whitespace-nowrap">
                     🕐 History
@@ -136,20 +211,20 @@
         <!-- Dashboard Tab -->
         <div id="content-dashboard" class="tab-content">
             <!-- Stats Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
-                <div class="bg-white rounded-xl shadow-md p-6 slide-in">
+            <div class="grid grid-cols-1 md:grid-cols-6 gap-6 mb-8">
+                <div class="bg-white rounded-xl shadow-md p-6 slide-in border-t-4" style="border-color: var(--sar-teal)">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-gray-600 text-sm mb-1">Total Today</p>
-                            <p class="text-3xl font-bold text-gray-800" id="stat-total">0</p>
+                            <p class="text-3xl font-bold" style="color: var(--sar-gray)" id="stat-total">0</p>
                         </div>
-                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <div class="w-12 h-12 rounded-lg flex items-center justify-center sar-badge">
                             <span class="text-2xl">📢</span>
                         </div>
                     </div>
                 </div>
                 
-                <div class="bg-white rounded-xl shadow-md p-6 slide-in" style="animation-delay: 0.1s">
+                <div class="bg-white rounded-xl shadow-md p-6 slide-in border-t-4 border-green-500" style="animation-delay: 0.1s">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-gray-600 text-sm mb-1">Completed</p>
@@ -161,7 +236,7 @@
                     </div>
                 </div>
                 
-                <div class="bg-white rounded-xl shadow-md p-6 slide-in" style="animation-delay: 0.2s">
+                <div class="bg-white rounded-xl shadow-md p-6 slide-in border-t-4 border-yellow-500" style="animation-delay: 0.2s">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-gray-600 text-sm mb-1">In Queue</p>
@@ -173,7 +248,7 @@
                     </div>
                 </div>
                 
-                <div class="bg-white rounded-xl shadow-md p-6 slide-in" style="animation-delay: 0.3s">
+                <div class="bg-white rounded-xl shadow-md p-6 slide-in border-t-4 border-purple-500" style="animation-delay: 0.3s">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-gray-600 text-sm mb-1">Scheduled</p>
@@ -185,14 +260,26 @@
                     </div>
                 </div>
 
-                <div class="bg-white rounded-xl shadow-md p-6 slide-in" style="animation-delay: 0.4s">
+                <div class="bg-white rounded-xl shadow-md p-6 slide-in border-t-4 border-blue-500" style="animation-delay: 0.4s">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-gray-600 text-sm mb-1">Translations</p>
-                            <p class="text-3xl font-bold text-indigo-600" id="stat-translations">0</p>
+                            <p class="text-gray-600 text-sm mb-1">Hourly</p>
+                            <p class="text-3xl font-bold text-blue-600" id="stat-hourly">0</p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <span class="text-2xl">⏰</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-md p-6 slide-in border-t-4 border-indigo-500" style="animation-delay: 0.5s">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm mb-1">Weekly/Monthly</p>
+                            <p class="text-3xl font-bold text-indigo-600" id="stat-recurring">0</p>
                         </div>
                         <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
-                            <span class="text-2xl">🌐</span>
+                            <span class="text-2xl">🔄</span>
                         </div>
                     </div>
                 </div>
@@ -201,7 +288,7 @@
             <!-- Real-time Queue -->
             <div class="bg-white rounded-xl shadow-md p-6 mb-8" id="queueContainer">
                 <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                    <h2 class="text-xl font-bold flex items-center" style="color: var(--sar-gray)">
                         <span class="mr-2">⏱️</span> Real-time Announcement Queue
                     </h2>
                     <div class="flex space-x-2">
@@ -216,65 +303,178 @@
                 
                 <div class="space-y-4" id="queueList">
                     <div class="text-center text-gray-500 py-8">
-                        Queue is empty. Create an announcement to get started!
+                        Queue is empty. Create an announcement or wait for scheduled ones.
                     </div>
                 </div>
             </div>
 
-            <!-- Next Scheduled -->
-            <div class="bg-white rounded-xl shadow-md p-6 mb-8">
-                <h3 class="text-lg font-bold text-gray-800 mb-4">📅 Next Scheduled Announcements</h3>
-                <div id="nextScheduled" class="space-y-3">
-                    <div class="text-center text-gray-500 py-4">
-                        No scheduled announcements
+            <!-- Active Schedules Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <!-- Upcoming Schedules -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h3 class="text-lg font-bold mb-4" style="color: var(--sar-gray)">📅 Upcoming Scheduled</h3>
+                    <div id="nextScheduled" class="space-y-3 max-h-96 overflow-y-auto">
+                        <div class="text-center text-gray-500 py-4">Loading schedules...</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Create Announcement Tab -->
-        <div id="content-announcements" class="tab-content hidden">
-            <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 mb-6">
-                <div class="flex items-start">
-                    <span class="text-2xl mr-3">🤖</span>
-                    <div>
-                        <h3 class="font-bold text-blue-800 mb-1">AI Auto-Translation Enabled</h3>
-                        <p class="text-blue-700 text-sm">Type in English - Arabic translation happens automatically! Or use voice input in either language.</p>
+        <!-- Schedule View Tab (All Schedules) -->
+        <div id="content-schedule-view" class="tab-content hidden">
+            <div class="bg-white rounded-xl shadow-md p-8 mb-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold" style="color: var(--sar-gray)">🚆 All Train Schedules</h2>
+                    <div class="flex gap-3">
+                        <button onclick="refreshSchedules()" class="px-4 py-2 sar-badge rounded-lg hover:opacity-80 transition">
+                            🔄 Refresh
+                        </button>
+                        <button onclick="showTab('schedule-create')" class="px-4 py-2 sar-button rounded-lg hover:opacity-90 transition">
+                            ➕ Create New Schedule
+                        </button>
                     </div>
                 </div>
-            </div>
 
-            <div class="bg-white rounded-xl shadow-md p-8">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">Create New Announcement</h2>
+                <!-- Schedule Filters -->
+                <div class="flex gap-4 mb-6">
+                    <select id="filterRepeat" onchange="filterSchedules()" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent" style="--tw-ring-color: var(--sar-teal)">
+                        <option value="all">All Frequencies</option>
+                        <option value="hourly">Hourly</option>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="none">One-time</option>
+                    </select>
+                    <select id="filterStatus" onchange="filterSchedules()" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent" style="--tw-ring-color: var(--sar-teal)">
+                        <option value="all">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+
+                <!-- Schedules Grid -->
+                <div id="scheduleGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Schedules will be rendered here dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Schedule Tab -->
+        <div id="content-schedule-create" class="tab-content hidden">
+            <div class="bg-white rounded-xl shadow-md p-8 max-w-4xl mx-auto">
+                <h2 class="text-2xl font-bold mb-6" style="color: var(--sar-gray)">➕ Create New Schedule</h2>
                 
-                <form onsubmit="createAnnouncement(event)" class="space-y-6">
-                    <!-- Platform and Train -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <form onsubmit="createSchedule(event)" class="space-y-6">
+                    <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Platform Number</label>
-                            <input type="text" id="platform" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 5" required>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Platform</label>
+                            <input type="text" id="sched-platform" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent" style="--tw-ring-color: var(--sar-teal)" placeholder="5" required>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Train Number</label>
-                            <input type="text" id="trainNumber" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., 123" required>
+                            <input type="text" id="sched-train" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent" style="--tw-ring-color: var(--sar-teal)" placeholder="123" required>
                         </div>
                     </div>
 
-                    <!-- Destination -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Destination</label>
-                        <input type="text" id="destination" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="e.g., Riyadh, Jeddah" required>
+                        <input type="text" id="sched-destination" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent" style="--tw-ring-color: var(--sar-teal)" placeholder="Riyadh" required>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
+                            <input type="date" id="sched-date" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent" style="--tw-ring-color: var(--sar-teal)" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Time</label>
+                            <input type="time" id="sched-time" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent" style="--tw-ring-color: var(--sar-teal)" required>
+                        </div>
+                    </div>
+
+                    <!-- Quick Schedule Buttons -->
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" onclick="scheduleIn1Minute()" class="px-3 py-2 sar-badge rounded-lg text-sm hover:opacity-80 transition">
+                            ⏱️ +1 min
+                        </button>
+                        <button type="button" onclick="scheduleIn5Minutes()" class="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm hover:bg-green-200 transition">
+                            ⏱️ +5 min
+                        </button>
+                        <button type="button" onclick="scheduleIn1Hour()" class="px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm hover:bg-blue-200 transition">
+                            ⏱️ +1 hour
+                        </button>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">English Announcement</label>
+                        <textarea id="sched-english" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent" style="--tw-ring-color: var(--sar-teal)" placeholder="Train announcement..." required></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Arabic (Auto-Translated)</label>
+                        <textarea id="sched-arabic" dir="rtl" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50" placeholder="ترجمة تلقائية..." readonly></textarea>
+                    </div>
+
+                    <!-- Repeat Options -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Repeat Frequency</label>
+                        <select id="sched-repeat" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent" style="--tw-ring-color: var(--sar-teal)">
+                            <option value="none">No Repeat (One-time)</option>
+                            <option value="hourly">Hourly</option>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-center space-x-3">
+                        <input type="checkbox" id="sched-bilingual" checked class="w-5 h-5 rounded" style="color: var(--sar-teal)">
+                        <label for="sched-bilingual" class="text-sm font-medium text-gray-700">Bilingual Announcement</label>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <button type="submit" class="flex-1 sar-button py-3 px-6 rounded-lg font-medium transition">
+                            💾 Create Schedule
+                        </button>
+                        <button type="button" onclick="resetScheduleForm()" class="px-6 py-3 border-2 border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition">
+                            🔄 Reset
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Announcement Tab (AI-powered) -->
+        <div id="content-announcement" class="tab-content hidden">
+            <div class="bg-white rounded-xl shadow-md p-8">
+                <h2 class="text-2xl font-bold mb-6" style="color: var(--sar-gray)">Create Quick Announcement</h2>
+                
+                <form onsubmit="createAnnouncement(event)" class="space-y-6">
+                    <!-- Platform and Train -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Platform Number</label>
+                            <input type="text" id="platform" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent" style="--tw-ring-color: var(--sar-teal)" placeholder="e.g., 5" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Train Number</label>
+                            <input type="text" id="trainNumber" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent" style="--tw-ring-color: var(--sar-teal)" placeholder="e.g., 123" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Destination</label>
+                            <input type="text" id="destination" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent" style="--tw-ring-color: var(--sar-teal)" placeholder="e.g., Riyadh" required>
+                        </div>
                     </div>
 
                     <!-- English Text -->
                     <div>
                         <div class="flex items-center justify-between mb-2">
-                            <label class="block text-sm font-medium text-gray-700">English Announcement (Type Here)</label>
-                            <button type="button" onclick="useVoiceInput('en', 'textEnglish')" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-sm hover:bg-blue-200 transition flex items-center">
-                                🎤 Voice Input (English)
+                            <label class="block text-sm font-medium text-gray-700">English Announcement</label>
+                            <button type="button" onclick="useVoiceInput('en', 'textEnglish')" class="px-3 py-1 sar-badge rounded-lg text-sm hover:opacity-80 transition">
+                                🎤 Voice (English)
                             </button>
                         </div>
-                        <textarea id="textEnglish" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Type in English... (Auto-translates to Arabic)" required></textarea>
+                        <textarea id="textEnglish" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent" style="--tw-ring-color: var(--sar-teal)" placeholder="Type in English... (Auto-translates to Arabic)" required></textarea>
                         <p class="text-sm text-gray-500 mt-1"><span id="englishCount">0</span>/500 characters</p>
                     </div>
 
@@ -282,39 +482,39 @@
                     <div>
                         <div class="flex items-center justify-between mb-2">
                             <label class="block text-sm font-medium text-gray-700">Arabic Announcement (Auto-Translated)</label>
-                            <button type="button" onclick="useVoiceInput('ar', 'textArabic')" class="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-sm hover:bg-green-200 transition flex items-center">
-                                🎤 Voice Input (Arabic)
+                            <button type="button" onclick="useVoiceInput('ar', 'textArabic')" class="px-3 py-1 bg-green-100 text-green-700 rounded-lg text-sm hover:bg-green-200 transition">
+                                🎤 Voice (Arabic)
                             </button>
                         </div>
-                        <textarea id="textArabic" dir="rtl" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-gray-50" placeholder="ترجمة تلقائية..." readonly></textarea>
+                        <textarea id="textArabic" dir="rtl" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50" placeholder="ترجمة تلقائية..." readonly></textarea>
                         <p class="text-sm text-gray-500 mt-1">
                             <span id="arabicCount">0</span>/500 characters
-                            <span id="translationIndicator" class="ml-2 text-blue-600 hidden">🔄 Translating...</span>
+                            <span id="translationIndicator" class="ml-2 hidden" style="color: var(--sar-teal)">🔄 Translating...</span>
                         </p>
                     </div>
 
-                    <!-- Manual Edit Option -->
-                    <div class="flex items-center space-x-3">
-                        <input type="checkbox" id="manualEdit" onchange="toggleManualEdit()" class="w-5 h-5 text-blue-600 rounded">
-                        <label for="manualEdit" class="text-sm font-medium text-gray-700">Manually edit Arabic text</label>
-                    </div>
-
-                    <!-- Bilingual Option -->
-                    <div class="flex items-center space-x-3">
-                        <input type="checkbox" id="bilingual" checked class="w-5 h-5 text-blue-600 rounded">
-                        <label for="bilingual" class="text-sm font-medium text-gray-700">Bilingual Announcement (Arabic + English)</label>
+                    <!-- Options -->
+                    <div class="flex items-center space-x-6">
+                        <div class="flex items-center space-x-3">
+                            <input type="checkbox" id="manualEdit" onchange="toggleManualEdit()" class="w-5 h-5 rounded" style="color: var(--sar-teal)">
+                            <label for="manualEdit" class="text-sm font-medium text-gray-700">Manually edit Arabic</label>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <input type="checkbox" id="bilingual" checked class="w-5 h-5 rounded" style="color: var(--sar-teal)">
+                            <label for="bilingual" class="text-sm font-medium text-gray-700">Bilingual (Arabic + English)</label>
+                        </div>
                     </div>
 
                     <!-- Buttons -->
                     <div class="flex gap-4">
-                        <button type="submit" class="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-blue-700 transition flex items-center justify-center">
+                        <button type="submit" class="flex-1 sar-button py-3 px-6 rounded-lg font-medium transition flex items-center justify-center">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
-                            Create & Queue Now
+                            Announce Now (Queue)
                         </button>
-                        <button type="button" onclick="previewAudio()" class="px-6 py-3 border-2 border-blue-600 text-blue-600 rounded-lg font-medium hover:bg-blue-50 transition flex items-center">
+                        <button type="button" onclick="previewAudio()" class="px-6 py-3 border-2 rounded-lg font-medium transition flex items-center" style="border-color: var(--sar-teal); color: var(--sar-teal)">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
                             </svg>
@@ -325,152 +525,94 @@
             </div>
         </div>
 
-        <!-- Schedules Tab -->
-        <div id="content-schedules" class="tab-content hidden">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                
-                <!-- Create Schedule Form -->
-                <div class="bg-white rounded-xl shadow-md p-8">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-6">📅 Create Schedule</h2>
-                    
-                    <form onsubmit="createSchedule(event)" class="space-y-6">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Platform</label>
-                                <input type="text" id="sched-platform" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="5" required>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Train Number</label>
-                                <input type="text" id="sched-train" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="123" required>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Destination</label>
-                            <input type="text" id="sched-destination" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="Riyadh" required>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
-                                <input type="date" id="sched-date" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" required>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Time</label>
-                                <input type="time" id="sched-time" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" required>
-                            </div>
-                        </div>
-
-                        <!-- Quick Schedule Buttons -->
-                        <div class="flex gap-2">
-                            <button type="button" onclick="scheduleIn1Minute()" class="flex-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm hover:bg-blue-200 transition">
-                                ⏱️ Schedule in 1 minute
-                            </button>
-                            <button type="button" onclick="scheduleIn5Minutes()" class="flex-1 px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm hover:bg-green-200 transition">
-                                ⏱️ Schedule in 5 minutes
-                            </button>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">English Announcement</label>
-                            <textarea id="sched-english" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" placeholder="Train announcement..." required></textarea>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Arabic Announcement</label>
-                            <textarea id="sched-arabic" dir="rtl" rows="3" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 bg-gray-50" placeholder="إعلان القطار..." readonly></textarea>
-                        </div>
-
-                        <div class="flex items-center space-x-3">
-                            <input type="checkbox" id="sched-repeat" class="w-5 h-5 text-purple-600 rounded">
-                            <label for="sched-repeat" class="text-sm font-medium text-gray-700">Repeat Daily</label>
-                        </div>
-
-                        <button type="submit" class="w-full bg-purple-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-purple-700 transition">
-                            📅 Schedule Announcement
-                        </button>
-                    </form>
-                </div>
-
-                <!-- Active Schedules List -->
-                <div class="bg-white rounded-xl shadow-md p-8">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold text-gray-800">Active Schedules</h2>
-                        <button onclick="clearAllSchedules()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition text-sm">
-                            Clear All
-                        </button>
-                    </div>
-                    
-                    <div id="schedulesList" class="space-y-4">
-                        <div class="text-center text-gray-500 py-8">
-                            No schedules yet. Create one to get started!
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Urgent Announcement Tab -->
-        <div id="content-urgent" class="tab-content hidden">
-            <div class="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-6">
-                <div class="flex items-start">
-                    <span class="text-2xl mr-3">⚠️</span>
-                    <div>
-                        <h3 class="font-bold text-red-800 mb-1">Emergency Announcements</h3>
-                        <p class="text-red-700 text-sm">Broadcast immediately with highest priority. Supports English and Arabic voice input!</p>
-                    </div>
-                </div>
-            </div>
-
+        <!-- Live Announcement Tab (Real Voice Recording) -->
+        <div id="content-live-announcement" class="tab-content hidden">
             <div class="bg-white rounded-xl shadow-md p-8">
-                <h2 class="text-2xl font-bold text-gray-800 mb-6">Create Urgent Announcement</h2>
+                <h2 class="text-2xl font-bold mb-6" style="color: var(--sar-gray)">Create Live Announcement</h2>
                 
-                <!-- Language Selection -->
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-3">Voice Input Language</label>
-                    <div class="grid grid-cols-2 gap-4">
-                        <button type="button" onclick="setVoiceLang('en')" id="voiceLangEn" class="p-4 border-2 border-blue-600 bg-blue-50 text-blue-700 rounded-lg font-medium hover:bg-blue-100 transition">
-                            🇺🇸 English
-                        </button>
-                        <button type="button" onclick="setVoiceLang('ar')" id="voiceLangAr" class="p-4 border-2 border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition">
-                            🇸🇦 Arabic (العربية)
-                        </button>
+                <form onsubmit="createLiveAnnouncement(event)" class="space-y-6">
+                    <!-- Platform and Train -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Platform Number <span class="text-gray-500 font-normal">(Optional)</span></label>
+                            <input type="text" id="live-platform" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent" style="--tw-ring-color: var(--sar-teal)" placeholder="e.g., 5">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Train Number <span class="text-gray-500 font-normal">(Optional)</span></label>
+                            <input type="text" id="live-trainNumber" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent" style="--tw-ring-color: var(--sar-teal)" placeholder="e.g., 123">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Destination <span class="text-gray-500 font-normal">(Optional)</span></label>
+                            <input type="text" id="live-destination" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent" style="--tw-ring-color: var(--sar-teal)" placeholder="e.g., Riyadh">
+                        </div>
                     </div>
-                </div>
 
-                <!-- Voice Input -->
-                <div class="mb-8">
-                    <label class="block text-sm font-medium text-gray-700 mb-4">Voice Input</label>
-                    <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center">
-                        <button type="button" onclick="toggleUrgentRecording()" id="urgentRecordBtn" class="relative w-24 h-24 bg-red-600 hover:bg-red-700 rounded-full flex items-center justify-center mx-auto mb-4 transition">
-                            <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                    <!-- Language Selection -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-3">Recording Language</label>
+                        <div class="grid grid-cols-2 gap-4">
+                            <button type="button" onclick="setLiveRecordingLang('en')" id="liveRecordLangEn" class="p-4 border-2 sar-badge rounded-lg font-medium transition" style="border-color: var(--sar-teal)">
+                                🇺🇸 English
+                            </button>
+                            <button type="button" onclick="setLiveRecordingLang('ar')" id="liveRecordLangAr" class="p-4 border-2 border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition">
+                                🇸🇦 Arabic (العربية)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Voice Recording Section -->
+                    <div class="border-2 border-dashed border-gray-300 rounded-xl p-8">
+                        <label class="block text-sm font-medium text-gray-700 mb-4 text-center">Record Your Voice</label>
+                        <div class="text-center">
+                            <button type="button" onclick="toggleLiveRecording()" id="liveRecordBtn" class="relative w-32 h-32 mx-auto mb-4 transition rounded-full flex items-center justify-center sar-button hover:opacity-90">
+                                <svg id="liveRecordIcon" class="w-16 h-16 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                                </svg>
+                            </button>
+                            <p class="text-gray-600 font-medium text-lg mb-2" id="liveRecordStatus">Click to Start Recording</p>
+                            <p class="text-sm" style="color: var(--sar-teal)" id="liveRecordTimer">00:00</p>
+                            <p class="text-sm text-gray-500 mt-2" id="liveLangDisplay">Language: English</p>
+                        </div>
+
+                        <!-- Recorded Audio Preview -->
+                        <div id="liveAudioPreview" class="hidden mt-6">
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm font-medium text-gray-700">Recorded Audio:</span>
+                                    <button type="button" onclick="deleteLiveRecording()" class="text-red-600 hover:text-red-700 text-sm">
+                                        🗑️ Delete
+                                    </button>
+                                </div>
+                                <audio id="liveAudioPlayer" controls class="w-full"></audio>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Options -->
+                    <div class="flex items-center space-x-6">
+                        <div class="flex items-center space-x-3">
+                            <input type="checkbox" id="live-bilingual" class="w-5 h-5 rounded" style="color: var(--sar-teal)">
+                            <label for="live-bilingual" class="text-sm font-medium text-gray-700">Record Both Languages (Bilingual)</label>
+                        </div>
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="flex gap-4">
+                        <button type="submit" class="flex-1 sar-button py-3 px-6 rounded-lg font-medium transition flex items-center justify-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                             </svg>
+                            Announce Now (Queue)
                         </button>
-                        <p class="text-gray-600" id="urgentRecordStatus">Click microphone to start</p>
-                        <p class="text-sm text-blue-600 mt-2" id="urgentVoiceLang">Language: English</p>
+                        <button type="button" onclick="playLivePreview()" class="px-6 py-3 border-2 rounded-lg font-medium transition flex items-center" style="border-color: var(--sar-teal); color: var(--sar-teal)">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+                            </svg>
+                            Play Preview
+                        </button>
                     </div>
-                </div>
-
-                <!-- Text Input -->
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Or Type Urgent Message</label>
-                    <textarea id="urgentText" rows="4" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent" placeholder="Type your urgent announcement here..."></textarea>
-                </div>
-
-                <!-- Platform Selection -->
-                <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-3">Platform</label>
-                    <input type="text" id="urgentPlatform" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500" placeholder="Platform number (or 'ALL' for all platforms)">
-                </div>
-
-                <!-- Broadcast Button -->
-                <button onclick="broadcastUrgent()" class="w-full bg-red-600 text-white py-4 px-6 rounded-lg font-bold text-lg hover:bg-red-700 transition flex items-center justify-center">
-                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                    </svg>
-                    BROADCAST URGENT ANNOUNCEMENT NOW
-                </button>
+                </form>
             </div>
         </div>
 
@@ -478,7 +620,7 @@
         <div id="content-history" class="tab-content hidden">
             <div class="bg-white rounded-xl shadow-md p-8">
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800">Announcement History</h2>
+                    <h2 class="text-2xl font-bold" style="color: var(--sar-gray)">Announcement History</h2>
                     <button onclick="clearHistory()" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
                         Clear History
                     </button>
@@ -486,7 +628,7 @@
 
                 <div class="space-y-4" id="historyList">
                     <div class="text-center text-gray-500 py-8">
-                        No announcements yet. Create one to see it here!
+                        No announcements yet.
                     </div>
                 </div>
             </div>
@@ -494,7 +636,7 @@
     </div>
 
     <!-- Toast -->
-    <div id="toast" class="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-4 rounded-lg shadow-lg hidden z-50">
+    <div id="toast" class="fixed bottom-4 right-4 text-white px-6 py-4 rounded-lg shadow-lg hidden z-50" style="background: var(--sar-teal)">
         <div class="flex items-center">
             <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -517,6 +659,7 @@
         let currentVoiceLang = 'en';
         let queueProcessorInterval = null;
         let scheduleCheckInterval = null;
+        let clockInterval = null;
         
         let stats = {
             total: 0,
@@ -525,6 +668,22 @@
             failed: 0
         };
 
+        // ElevenLabs Configuration
+        const ELEVENLABS_API_KEY = 'sk_a526ef0f2a418cf57d24448c42394ce179e3edc9956e3ee2';
+        const ELEVENLABS_API_URL = 'https://api.elevenlabs.io/v1/text-to-speech';
+        
+        // Voice IDs for different languages (ElevenLabs multilingual voices)
+        const VOICE_IDS = {
+            // Professional multilingual voices
+            'en': 'Xb7hH8MSUJpSbSDYk0k2', // Custom voice ID
+            'ar': 'Xb7hH8MSUJpSbSDYk0k2'  // Same voice works for Arabic (multilingual v2)
+        };
+        
+        let useElevenLabs = true; // Toggle to use ElevenLabs or browser TTS
+        let audioContext = null;
+        let currentAudioSource = null;
+
+        // Fallback browser TTS
         const synth = window.speechSynthesis;
         let voices = [];
 
@@ -544,22 +703,20 @@
 
         const translationDict = {
             'train': 'القطار', 'number': 'رقم', 'platform': 'الرصيف',
-            'will arrive': 'سيصل', 'will depart': 'سيغادر',
+            'will arrive': 'سيصل', 'will depart': 'سيغادر', 'arriving': 'يصل', 'departing': 'يغادر',
             'to': 'إلى', 'from': 'من', 'at': 'في', 'in': 'خلال',
-            'minutes': 'دقائق', 'heading': 'المتجه',
+            'minutes': 'دقائق', 'heading': 'المتجه', 'bound for': 'المتجه إلى',
             'riyadh': 'الرياض', 'jeddah': 'جدة', 'dammam': 'الدمام',
-            'makkah': 'مكة', 'madinah': 'المدينة',
-            'delayed': 'متأخر', 'cancelled': 'ملغى',
-            'please': 'من فضلك', 'attention': 'انتباه',
-            'passengers': 'الركاب', 'emergency': 'طارئ',
-            'change': 'تغيير', 'now': 'الآن', 'ready': 'جاهز', 'boarding': 'الصعود'
+            'makkah': 'مكة', 'madinah': 'المدينة', 'taif': 'الطائف',
+            'delayed': 'متأخر', 'cancelled': 'ملغى', 'on time': 'في الموعد',
+            'please': 'من فضلك', 'attention': 'انتباه', 'dear': 'عزيزي',
+            'passengers': 'الركاب', 'emergency': 'طارئ', 'express': 'سريع',
+            'change': 'تغيير', 'now': 'الآن', 'ready': 'جاهز', 'boarding': 'الصعود',
+            'express service': 'خدمة سريعة', 'special train': 'قطار خاص'
         };
 
         function loadVoices() {
             voices = synth.getVoices();
-            if (voices.length > 0) {
-                updateAudioStatus('Ready');
-            }
         }
 
         loadVoices();
@@ -567,14 +724,360 @@
             speechSynthesis.onvoiceschanged = loadVoices;
         }
 
+        // Initialize Audio Context
+        function initAudioContext() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            return audioContext;
+        }
+
+        // ElevenLabs Text-to-Speech
+        async function elevenLabsTTS(text, lang) {
+            try {
+                const voiceId = VOICE_IDS[lang] || VOICE_IDS['en'];
+                
+                console.log(`🎤 ElevenLabs TTS: "${text.substring(0, 50)}..." (${lang})`);
+                
+                const response = await fetch(`${ELEVENLABS_API_URL}/${voiceId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'audio/mpeg',
+                        'xi-api-key': ELEVENLABS_API_KEY,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        text: text,
+                        model_id: 'eleven_multilingual_v2',
+                        voice_settings: {
+                            stability: 0.5,
+                            similarity_boost: 0.75,
+                            style: 0.0,
+                            use_speaker_boost: true
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('ElevenLabs API error:', response.status, errorText);
+                    throw new Error(`ElevenLabs API error: ${response.status}`);
+                }
+
+                const audioBlob = await response.blob();
+                console.log(`✅ ElevenLabs audio received: ${audioBlob.size} bytes`);
+                
+                return audioBlob;
+            } catch (error) {
+                console.error('ElevenLabs TTS Error:', error);
+                throw error;
+            }
+        }
+
+        // Play Audio Blob
+        async function playAudioBlob(audioBlob) {
+            return new Promise((resolve, reject) => {
+                const audio = new Audio();
+                const audioUrl = URL.createObjectURL(audioBlob);
+                
+                audio.src = audioUrl;
+                audio.playbackRate = 1.0; // Normal speed (1x)
+                audio.onended = () => {
+                    URL.revokeObjectURL(audioUrl);
+                    resolve();
+                };
+                audio.onerror = (error) => {
+                    URL.revokeObjectURL(audioUrl);
+                    reject(error);
+                };
+                
+                audio.play().catch(reject);
+            });
+        }
+
+        // Browser TTS Fallback
+        function browserTTS(text, lang) {
+            return new Promise((resolve, reject) => {
+                if (!text) {
+                    resolve();
+                    return;
+                }
+                
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = lang === 'ar' ? 'ar-SA' : 'en-US';
+                utterance.rate = 1.0; // Normal speed (1x)
+                utterance.pitch = 1;
+                utterance.volume = 1;
+                
+                const voice = voices.find(v => v.lang.startsWith(lang)) || voices[0];
+                if (voice) utterance.voice = voice;
+                
+                utterance.onend = resolve;
+                utterance.onerror = reject;
+                
+                synth.speak(utterance);
+            });
+        }
+
+        // Main Speech Function with ElevenLabs + Fallback
+        async function speakText(text, lang, callback) {
+            if (!text) {
+                if (callback) callback();
+                return;
+            }
+
+            try {
+                if (useElevenLabs && ELEVENLABS_API_KEY) {
+                    // Use ElevenLabs for high-quality audio
+                    console.log(`🔊 Using ElevenLabs for: ${lang}`);
+                    const audioBlob = await elevenLabsTTS(text, lang);
+                    await playAudioBlob(audioBlob);
+                    if (callback) callback();
+                } else {
+                    // Fallback to browser TTS
+                    console.log(`🔊 Using Browser TTS for: ${lang}`);
+                    await browserTTS(text, lang);
+                    if (callback) callback();
+                }
+            } catch (error) {
+                console.error('TTS Error, falling back to browser TTS:', error);
+                // Fallback to browser TTS on error
+                try {
+                    await browserTTS(text, lang);
+                    if (callback) callback();
+                } catch (fallbackError) {
+                    console.error('Browser TTS also failed:', fallbackError);
+                    if (callback) callback();
+                }
+            }
+        }
+
+        // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             setupCharacterCounters();
             setupAutoTranslation();
             setupScheduleTranslation();
             startQueueProcessor();
             startScheduleChecker();
+            startClock();
             setDefaultDateTime();
+            loadDefaultSchedules();
+            updateTTSEngineDisplay();
         });
+
+        function toggleTTSEngine() {
+            useElevenLabs = !useElevenLabs;
+            updateTTSEngineDisplay();
+            
+            if (useElevenLabs) {
+                showToast('🎤 Switched to ElevenLabs AI (High Quality)', 'green');
+            } else {
+                showToast('🔊 Switched to Browser TTS (Fallback)', 'blue');
+            }
+        }
+
+        function updateTTSEngineDisplay() {
+            const btn = document.getElementById('ttsEngine');
+            if (useElevenLabs) {
+                btn.textContent = '🎤 ElevenLabs AI';
+                btn.className = 'px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium hover:bg-green-200 transition cursor-pointer';
+            } else {
+                btn.textContent = '🔊 Browser TTS';
+                btn.className = 'px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium hover:bg-blue-200 transition cursor-pointer';
+            }
+        }
+
+        function startClock() {
+            function updateClock() {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                document.getElementById('currentTime').textContent = timeStr;
+            }
+            updateClock();
+            clockInterval = setInterval(updateClock, 1000);
+        }
+
+        function loadDefaultSchedules() {
+            // 2 Hourly schedules
+            const now = new Date();
+            
+            console.log('🚀 Initializing SAR Railway System with ElevenLabs AI');
+            console.log('🎤 ElevenLabs API Status:', ELEVENLABS_API_KEY ? 'Configured ✅' : 'Not configured ❌');
+            console.log('🔊 Voice Engine:', useElevenLabs ? 'ElevenLabs AI' : 'Browser TTS');
+            
+            // Hourly 1 - Next hour
+            const hourly1 = new Date(now.getTime() + 60*60*1000);
+            schedules.push({
+                id: nextScheduleId++,
+                platform: '3',
+                trainNumber: 'H101',
+                destination: 'Riyadh',
+                date: hourly1.toISOString().split('T')[0],
+                time: hourly1.toTimeString().slice(0, 5),
+                textEnglish: 'Hourly express service train H101 to Riyadh departing from platform 3',
+                textArabic: 'خدمة سريعة القطار رقم ١٠١ المتجه إلى الرياض يغادر من الرصيف ٣',
+                repeat: 'hourly',
+                active: true,
+                triggered: false,
+                createdAt: now
+            });
+
+            // Hourly 2 - In 2 hours
+            const hourly2 = new Date(now.getTime() + 2*60*60*1000);
+            schedules.push({
+                id: nextScheduleId++,
+                platform: '5',
+                trainNumber: 'H202',
+                destination: 'Jeddah',
+                date: hourly2.toISOString().split('T')[0],
+                time: hourly2.toTimeString().slice(0, 5),
+                textEnglish: 'Hourly train H202 to Jeddah now boarding at platform 5',
+                textArabic: 'القطار رقم ٢٠٢ المتجه إلى جدة جاهز للصعود في الرصيف ٥',
+                repeat: 'hourly',
+                active: true,
+                triggered: false,
+                createdAt: now
+            });
+
+            // 4 Daily schedules
+            const tomorrow = new Date(now);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+
+            schedules.push({
+                id: nextScheduleId++,
+                platform: '1',
+                trainNumber: 'D301',
+                destination: 'Dammam',
+                date: tomorrow.toISOString().split('T')[0],
+                time: '08:00',
+                textEnglish: 'Daily morning express train D301 to Dammam departing at 8 AM from platform 1',
+                textArabic: 'القطار الصباحي السريع رقم ٣٠١ المتجه إلى الدمام يغادر في الساعة ٨ صباحا من الرصيف ١',
+                repeat: 'daily',
+                active: true,
+                triggered: false,
+                createdAt: now
+            });
+
+            schedules.push({
+                id: nextScheduleId++,
+                platform: '2',
+                trainNumber: 'D302',
+                destination: 'Riyadh',
+                date: tomorrow.toISOString().split('T')[0],
+                time: '12:00',
+                textEnglish: 'Daily midday train D302 to Riyadh departing at noon from platform 2',
+                textArabic: 'القطار اليومي رقم ٣٠٢ المتجه إلى الرياض يغادر في الظهر من الرصيف ٢',
+                repeat: 'daily',
+                active: true,
+                triggered: false,
+                createdAt: now
+            });
+
+            schedules.push({
+                id: nextScheduleId++,
+                platform: '4',
+                trainNumber: 'D303',
+                destination: 'Makkah',
+                date: tomorrow.toISOString().split('T')[0],
+                time: '16:00',
+                textEnglish: 'Daily afternoon train D303 to Makkah departing at 4 PM from platform 4',
+                textArabic: 'القطار اليومي رقم ٣٠٣ المتجه إلى مكة يغادر في الساعة ٤ مساء من الرصيف ٤',
+                repeat: 'daily',
+                active: true,
+                triggered: false,
+                createdAt: now
+            });
+
+            schedules.push({
+                id: nextScheduleId++,
+                platform: '6',
+                trainNumber: 'D304',
+                destination: 'Madinah',
+                date: tomorrow.toISOString().split('T')[0],
+                time: '20:00',
+                textEnglish: 'Daily evening train D304 to Madinah departing at 8 PM from platform 6',
+                textArabic: 'القطار المسائي رقم ٣٠٤ المتجه إلى المدينة يغادر في الساعة ٨ مساء من الرصيف ٦',
+                repeat: 'daily',
+                active: true,
+                triggered: false,
+                createdAt: now
+            });
+
+            // 2 Weekly schedules
+            const nextWeek = new Date(now);
+            nextWeek.setDate(nextWeek.getDate() + 7);
+
+            schedules.push({
+                id: nextScheduleId++,
+                platform: '7',
+                trainNumber: 'W501',
+                destination: 'Taif',
+                date: nextWeek.toISOString().split('T')[0],
+                time: '10:00',
+                textEnglish: 'Weekly special service train W501 to Taif departing at 10 AM from platform 7',
+                textArabic: 'القطار الأسبوعي الخاص رقم ٥٠١ المتجه إلى الطائف يغادر في الساعة ١٠ صباحا من الرصيف ٧',
+                repeat: 'weekly',
+                active: true,
+                triggered: false,
+                createdAt: now
+            });
+
+            schedules.push({
+                id: nextScheduleId++,
+                platform: '8',
+                trainNumber: 'W502',
+                destination: 'Jeddah',
+                date: nextWeek.toISOString().split('T')[0],
+                time: '14:00',
+                textEnglish: 'Weekly weekend express train W502 to Jeddah departing at 2 PM from platform 8',
+                textArabic: 'القطار الأسبوعي السريع رقم ٥٠٢ المتجه إلى جدة يغادر في الساعة ٢ مساء من الرصيف ٨',
+                repeat: 'weekly',
+                active: true,
+                triggered: false,
+                createdAt: now
+            });
+
+            // 2 Monthly schedules
+            const nextMonth = new Date(now);
+            nextMonth.setMonth(nextMonth.getMonth() + 1);
+
+            schedules.push({
+                id: nextScheduleId++,
+                platform: '9',
+                trainNumber: 'M701',
+                destination: 'Riyadh',
+                date: nextMonth.toISOString().split('T')[0],
+                time: '09:00',
+                textEnglish: 'Monthly maintenance inspection train M701 to Riyadh departing at 9 AM from platform 9',
+                textArabic: 'القطار الشهري للفحص والصيانة رقم ٧٠١ المتجه إلى الرياض يغادر في الساعة ٩ صباحا من الرصيف ٩',
+                repeat: 'monthly',
+                active: true,
+                triggered: false,
+                createdAt: now
+            });
+
+            schedules.push({
+                id: nextScheduleId++,
+                platform: '10',
+                trainNumber: 'M702',
+                destination: 'Dammam',
+                date: nextMonth.toISOString().split('T')[0],
+                time: '18:00',
+                textEnglish: 'Monthly special event train M702 to Dammam departing at 6 PM from platform 10',
+                textArabic: 'القطار الشهري الخاص رقم ٧٠٢ المتجه إلى الدمام يغادر في الساعة ٦ مساء من الرصيف ١٠',
+                repeat: 'monthly',
+                active: true,
+                triggered: false,
+                createdAt: now
+            });
+
+            updateSchedulesList();
+            updateStats();
+            updateNextScheduled();
+            
+            showToast('✅ System loaded with 10 pre-configured schedules', 'green');
+            console.log('📅 Loaded 10 default schedules: 2 hourly, 4 daily, 2 weekly, 2 monthly');
+        }
 
         function setDefaultDateTime() {
             const now = new Date();
@@ -585,21 +1088,24 @@
         }
 
         function scheduleIn1Minute() {
-            const future = new Date(Date.now() + 60000); // 1 minute from now
-            const date = future.toISOString().split('T')[0];
-            const time = future.toTimeString().slice(0, 5);
-            document.getElementById('sched-date').value = date;
-            document.getElementById('sched-time').value = time;
+            const future = new Date(Date.now() + 60000);
+            document.getElementById('sched-date').value = future.toISOString().split('T')[0];
+            document.getElementById('sched-time').value = future.toTimeString().slice(0, 5);
             showToast('⏱️ Time set to 1 minute from now', 'blue');
         }
 
         function scheduleIn5Minutes() {
-            const future = new Date(Date.now() + 300000); // 5 minutes from now
-            const date = future.toISOString().split('T')[0];
-            const time = future.toTimeString().slice(0, 5);
-            document.getElementById('sched-date').value = date;
-            document.getElementById('sched-time').value = time;
+            const future = new Date(Date.now() + 300000);
+            document.getElementById('sched-date').value = future.toISOString().split('T')[0];
+            document.getElementById('sched-time').value = future.toTimeString().slice(0, 5);
             showToast('⏱️ Time set to 5 minutes from now', 'blue');
+        }
+
+        function scheduleIn1Hour() {
+            const future = new Date(Date.now() + 3600000);
+            document.getElementById('sched-date').value = future.toISOString().split('T')[0];
+            document.getElementById('sched-time').value = future.toTimeString().slice(0, 5);
+            showToast('⏱️ Time set to 1 hour from now', 'blue');
         }
 
         function setupAutoTranslation() {
@@ -660,11 +1166,6 @@
             if (indicator) indicator.classList.add('hidden');
             
             translationCount++;
-            updateTranslationCount();
-            
-            if (showToast) {
-                showToast('✅ Translated to Arabic', 'green');
-            }
         }
 
         function convertToArabicNumerals(text) {
@@ -682,11 +1183,9 @@
             if (checkbox.checked) {
                 arabicInput.classList.remove('bg-gray-50');
                 arabicInput.classList.add('bg-white');
-                showToast('Manual editing enabled', 'blue');
             } else {
                 arabicInput.classList.remove('bg-white');
                 arabicInput.classList.add('bg-gray-50');
-                showToast('Auto-translation enabled', 'blue');
             }
         }
 
@@ -711,7 +1210,7 @@
                     document.getElementById('arabicCount').textContent = transcript.length;
                 }
                 
-                showToast(`✅ Voice recognized (${lang.toUpperCase()})`);
+                showToast(`✅ Voice recognized`);
             };
             
             recognition.onerror = () => {
@@ -719,19 +1218,24 @@
             };
             
             recognition.start();
-            showToast(`🎤 Listening in ${lang.toUpperCase()}...`, 'blue');
+            showToast(`🎤 Listening...`, 'blue');
         }
 
         function setVoiceLang(lang) {
             currentVoiceLang = lang;
             
-            document.getElementById('voiceLangEn').className = lang === 'en' 
-                ? 'p-4 border-2 border-blue-600 bg-blue-50 text-blue-700 rounded-lg font-medium hover:bg-blue-100 transition'
-                : 'p-4 border-2 border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition';
+            const enBtn = document.getElementById('voiceLangEn');
+            const arBtn = document.getElementById('voiceLangAr');
             
-            document.getElementById('voiceLangAr').className = lang === 'ar'
-                ? 'p-4 border-2 border-green-600 bg-green-50 text-green-700 rounded-lg font-medium hover:bg-green-100 transition'
-                : 'p-4 border-2 border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition';
+            if (lang === 'en') {
+                enBtn.className = 'p-4 border-2 sar-badge rounded-lg font-medium transition';
+                enBtn.style.borderColor = 'var(--sar-teal)';
+                arBtn.className = 'p-4 border-2 border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition';
+            } else {
+                arBtn.className = 'p-4 border-2 bg-green-100 text-green-700 rounded-lg font-medium transition';
+                arBtn.style.borderColor = '#22c55e';
+                enBtn.className = 'p-4 border-2 border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition';
+            }
             
             document.getElementById('urgentVoiceLang').textContent = 
                 `Language: ${lang === 'ar' ? 'Arabic (العربية)' : 'English'}`;
@@ -783,14 +1287,6 @@
             document.getElementById('urgentRecordStatus').textContent = 'Click microphone to start';
         }
 
-        function updateAudioStatus(status) {
-            document.getElementById('audioStatus').textContent = status;
-        }
-
-        function updateTranslationCount() {
-            document.getElementById('stat-translations').textContent = translationCount;
-        }
-
         function createAnnouncement(e) {
             e.preventDefault();
             
@@ -804,7 +1300,8 @@
                 isBilingual: document.getElementById('bilingual').checked,
                 status: 'queued',
                 createdAt: new Date(),
-                priority: 'normal'
+                priority: 'normal',
+                repeat: 'none'
             };
             
             announcementQueue.push(announcement);
@@ -826,44 +1323,72 @@
         function createSchedule(e) {
             e.preventDefault();
             
-            const schedule = {
-                id: nextScheduleId++,
-                platform: document.getElementById('sched-platform').value,
-                trainNumber: document.getElementById('sched-train').value,
-                destination: document.getElementById('sched-destination').value,
-                date: document.getElementById('sched-date').value,
-                time: document.getElementById('sched-time').value,
-                textEnglish: document.getElementById('sched-english').value,
-                textArabic: document.getElementById('sched-arabic').value,
-                repeat: document.getElementById('sched-repeat').checked,
-                active: true,
-                triggered: false,
-                createdAt: new Date()
-            };
+            const repeatType = document.getElementById('sched-repeat').value;
+            const editingId = document.getElementById('sched-platform').dataset.editingId;
             
-            schedules.push(schedule);
+            if (editingId) {
+                // Update existing schedule
+                const scheduleIndex = schedules.findIndex(s => s.id === parseInt(editingId));
+                if (scheduleIndex !== -1) {
+                    schedules[scheduleIndex] = {
+                        ...schedules[scheduleIndex],
+                        platform: document.getElementById('sched-platform').value,
+                        trainNumber: document.getElementById('sched-train').value,
+                        destination: document.getElementById('sched-destination').value,
+                        date: document.getElementById('sched-date').value,
+                        time: document.getElementById('sched-time').value,
+                        textEnglish: document.getElementById('sched-english').value,
+                        textArabic: document.getElementById('sched-arabic').value,
+                        repeat: repeatType,
+                        updatedAt: new Date()
+                    };
+                    
+                    showToast('✅ Schedule updated successfully', 'green');
+                    delete document.getElementById('sched-platform').dataset.editingId;
+                }
+            } else {
+                // Create new schedule
+                const schedule = {
+                    id: nextScheduleId++,
+                    platform: document.getElementById('sched-platform').value,
+                    trainNumber: document.getElementById('sched-train').value,
+                    destination: document.getElementById('sched-destination').value,
+                    date: document.getElementById('sched-date').value,
+                    time: document.getElementById('sched-time').value,
+                    textEnglish: document.getElementById('sched-english').value,
+                    textArabic: document.getElementById('sched-arabic').value,
+                    repeat: repeatType,
+                    active: true,
+                    triggered: false,
+                    createdAt: new Date()
+                };
+                
+                schedules.push(schedule);
+                
+                const scheduledTime = new Date(`${schedule.date}T${schedule.time}:00`);
+                const now = new Date();
+                const minutes = Math.floor((scheduledTime - now) / 60000);
+                
+                if (minutes <= 2 && minutes >= 0) {
+                    showToast(`✅ Schedule created! Will trigger in ${minutes} minute(s)`, 'purple');
+                } else if (minutes < 0) {
+                    showToast(`⚠️ Schedule time is in the past! Set future time.`, 'yellow');
+                } else {
+                    const repeatText = repeatType === 'none' ? '' : ` (${repeatType})`;
+                    showToast(`✅ Schedule created for ${schedule.date} at ${schedule.time}${repeatText}`, 'green');
+                }
+            }
+            
             updateSchedulesList();
             updateStats();
             updateNextScheduled();
-            
-            // Calculate time until trigger
-            const scheduledTime = new Date(`${schedule.date}T${schedule.time}:00`);
-            const now = new Date();
-            const minutes = Math.floor((scheduledTime - now) / 60000);
-            
-            if (minutes <= 2 && minutes >= 0) {
-                showToast(`✅ Schedule created! Will trigger in ${minutes} minute(s)`, 'purple');
-            } else if (minutes < 0) {
-                showToast(`⚠️ Schedule created but time is in the past! Set future time for it to trigger.`, 'yellow');
-            } else {
-                showToast(`✅ Schedule created for ${schedule.date} at ${schedule.time}`, 'green');
-            }
+            renderScheduleGrid();
             
             e.target.reset();
             setDefaultDateTime();
+            document.getElementById('sched-repeat').value = 'none';
             
-            // Switch to dashboard to see the schedule
-            showTab('dashboard');
+            showTab('schedule-view');
         }
 
         function deleteSchedule(id) {
@@ -872,6 +1397,7 @@
                 updateSchedulesList();
                 updateStats();
                 updateNextScheduled();
+                renderScheduleGrid();
                 showToast('Schedule deleted', 'red');
             }
         }
@@ -886,11 +1412,20 @@
             }
         }
 
+        function testScheduleNow(scheduleId) {
+            const schedule = schedules.find(s => s.id === scheduleId);
+            if (!schedule) return;
+            
+            triggerScheduledAnnouncement(schedule);
+            showToast(`🎯 Testing schedule: Train ${schedule.trainNumber}`, 'green');
+            showTab('dashboard');
+        }
+
         function updateSchedulesList() {
             const list = document.getElementById('schedulesList');
             
             if (schedules.length === 0) {
-                list.innerHTML = '<div class="text-center text-gray-500 py-8">No schedules yet. Create one to get started!</div>';
+                list.innerHTML = '<div class="text-center text-gray-500 py-8">No schedules. Create one or load defaults!</div>';
                 return;
             }
             
@@ -899,16 +1434,24 @@
                 const now = new Date();
                 const isPast = scheduledTime < now;
                 
+                const repeatColors = {
+                    'hourly': 'bg-blue-100 text-blue-700',
+                    'daily': 'bg-green-100 text-green-700',
+                    'weekly': 'bg-purple-100 text-purple-700',
+                    'monthly': 'bg-indigo-100 text-indigo-700',
+                    'none': 'bg-gray-100 text-gray-700'
+                };
+                
                 return `
                 <div class="p-4 border rounded-lg hover:bg-gray-50 ${!s.active ? 'opacity-50' : ''}">
                     <div class="flex justify-between items-start mb-2">
                         <div class="flex-1">
-                            <p class="font-bold text-gray-800">Platform ${s.platform} - Train ${s.trainNumber}</p>
+                            <p class="font-bold" style="color: var(--sar-gray)">Platform ${s.platform} - Train ${s.trainNumber}</p>
                             <p class="text-sm text-gray-600">→ ${s.destination}</p>
                         </div>
                         <div class="flex space-x-2">
-                            <button onclick="testScheduleNow(${s.id})" class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm" title="Test this schedule now">
-                                ▶️ Test Now
+                            <button onclick="testScheduleNow(${s.id})" class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm" title="Test now">
+                                ▶️ Test
                             </button>
                             <button onclick="deleteSchedule(${s.id})" class="text-red-600 hover:text-red-700">
                                 🗑️
@@ -917,26 +1460,15 @@
                     </div>
                     <div class="text-sm text-gray-600">
                         <p>📅 ${s.date} at ${s.time} ${isPast ? '(Past)' : ''}</p>
-                        <p class="mt-1">${s.textEnglish}</p>
+                        <p class="mt-1">${s.textEnglish.substring(0, 60)}...</p>
                         <div class="flex items-center mt-2 space-x-2">
-                            ${s.repeat ? '<span class="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs">🔄 Repeats Daily</span>' : ''}
+                            ${s.repeat !== 'none' ? `<span class="px-2 py-1 rounded text-xs ${repeatColors[s.repeat]}">${s.repeat === 'hourly' ? '🕐 Hourly' : s.repeat === 'daily' ? '📅 Daily' : s.repeat === 'weekly' ? '📆 Weekly' : '🗓️ Monthly'}</span>` : ''}
                             ${!s.active ? '<span class="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">Inactive</span>' : ''}
                             ${s.triggered ? '<span class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">✅ Triggered</span>' : ''}
                         </div>
                     </div>
                 </div>
             `}).join('');
-        }
-
-        function testScheduleNow(scheduleId) {
-            const schedule = schedules.find(s => s.id === scheduleId);
-            if (!schedule) return;
-            
-            triggerScheduledAnnouncement(schedule);
-            showToast(`🎯 Testing schedule: Train ${schedule.trainNumber} - Added to queue!`, 'green');
-            
-            // Switch to dashboard to see it
-            showTab('dashboard');
         }
 
         function updateNextScheduled() {
@@ -956,33 +1488,56 @@
                 return;
             }
             
-            container.innerHTML = allActive.map(s => {
+            container.innerHTML = allActive.slice(0, 10).map(s => {
                 const diff = s.scheduledTime - now;
                 const isPast = diff < 0;
                 const minutes = Math.abs(Math.floor(diff / 60000));
                 const timeUntil = isPast 
                     ? `${minutes} min ago` 
                     : minutes === 0 
-                        ? 'Starting soon!' 
-                        : `In ${minutes} min`;
+                        ? 'Now!' 
+                        : minutes < 60
+                            ? `In ${minutes} min`
+                            : `In ${Math.floor(minutes/60)}h ${minutes%60}m`;
                 
                 return `
-                <div class="flex items-center justify-between p-3 ${isPast ? 'bg-gray-50' : 'bg-purple-50'} rounded-lg border ${isPast ? 'border-gray-200' : 'border-purple-200'}">
+                <div class="flex items-center justify-between p-3 ${isPast ? 'bg-gray-50' : 'sar-badge'} rounded-lg border ${isPast ? 'border-gray-200' : 'border-' + getRepeatColor(s.repeat)}">
                     <div class="flex items-center space-x-3">
-                        <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                            <span class="text-lg">📅</span>
+                        <div class="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
+                            <span class="text-lg">${getRepeatIcon(s.repeat)}</span>
                         </div>
                         <div>
-                            <p class="font-semibold text-gray-800">Platform ${s.platform} - Train ${s.trainNumber}</p>
-                            <p class="text-sm text-gray-600">${s.date} at ${s.time} - ${timeUntil}</p>
-                            ${s.repeat ? '<p class="text-xs text-purple-600 mt-1">🔄 Repeats Daily</p>' : ''}
+                            <p class="font-semibold" style="color: var(--sar-gray)">Platform ${s.platform} - Train ${s.trainNumber}</p>
+                            <p class="text-xs text-gray-600">${s.time} - ${timeUntil}</p>
                         </div>
                     </div>
-                    <span class="px-2 py-1 ${isPast ? 'bg-gray-200 text-gray-700' : 'bg-purple-200 text-purple-700'} rounded text-xs font-medium">
-                        ${isPast ? 'PAST' : 'PENDING'}
+                    <span class="px-2 py-1 ${isPast ? 'bg-gray-200 text-gray-700' : 'bg-white text-' + getRepeatColor(s.repeat) + '-600'} rounded text-xs font-medium">
+                        ${s.repeat === 'none' ? 'ONCE' : s.repeat.toUpperCase()}
                     </span>
                 </div>
             `}).join('');
+        }
+
+        function getRepeatColor(repeat) {
+            const colors = {
+                'hourly': 'blue',
+                'daily': 'green',
+                'weekly': 'purple',
+                'monthly': 'indigo',
+                'none': 'gray'
+            };
+            return colors[repeat] || 'gray';
+        }
+
+        function getRepeatIcon(repeat) {
+            const icons = {
+                'hourly': '🕐',
+                'daily': '📅',
+                'weekly': '📆',
+                'monthly': '🗓️',
+                'none': '📢'
+            };
+            return icons[repeat] || '📢';
         }
 
         function startScheduleChecker() {
@@ -994,38 +1549,47 @@
                     
                     const scheduledTime = new Date(`${schedule.date}T${schedule.time}:00`);
                     const diff = scheduledTime - now;
-                    const diffMinutes = Math.floor(diff / 60000);
                     
-                    // Debug logging
-                    if (diffMinutes >= 0 && diffMinutes <= 2) {
-                        console.log(`Schedule ${schedule.id}: Train ${schedule.trainNumber}, Time diff: ${diffMinutes} min, ${Math.floor((diff % 60000) / 1000)} sec`);
-                    }
-                    
-                    // For demo: trigger if within 2 minutes (120 seconds)
-                    // In production: use 10 seconds
+                    // Trigger if within 2 minutes (120 seconds)
                     if (diff > 0 && diff <= 120000) {
                         if (!schedule.triggered) {
                             schedule.triggered = true;
                             triggerScheduledAnnouncement(schedule);
-                            if (!schedule.repeat) {
+                            
+                            // Handle repeat
+                            if (schedule.repeat === 'hourly') {
+                                const nextTime = new Date(scheduledTime.getTime() + 60*60*1000);
+                                schedule.date = nextTime.toISOString().split('T')[0];
+                                schedule.time = nextTime.toTimeString().slice(0, 5);
+                                schedule.triggered = false;
+                            } else if (schedule.repeat === 'daily') {
+                                const nextTime = new Date(scheduledTime.getTime() + 24*60*60*1000);
+                                schedule.date = nextTime.toISOString().split('T')[0];
+                                schedule.triggered = false;
+                            } else if (schedule.repeat === 'weekly') {
+                                const nextTime = new Date(scheduledTime.getTime() + 7*24*60*60*1000);
+                                schedule.date = nextTime.toISOString().split('T')[0];
+                                schedule.triggered = false;
+                            } else if (schedule.repeat === 'monthly') {
+                                const nextTime = new Date(scheduledTime);
+                                nextTime.setMonth(nextTime.getMonth() + 1);
+                                schedule.date = nextTime.toISOString().split('T')[0];
+                                schedule.triggered = false;
+                            } else {
                                 schedule.active = false;
                             }
+                            
                             console.log(`✅ Schedule ${schedule.id} triggered!`);
-                            showToast(`📅 Scheduled announcement triggered: Train ${schedule.trainNumber}`, 'purple');
+                            showToast(`📅 Scheduled: Train ${schedule.trainNumber}`, 'purple');
                         }
-                    }
-                    
-                    // Reset triggered flag for repeat schedules after they pass
-                    if (schedule.repeat && diff < -60000) {
-                        schedule.triggered = false;
-                        console.log(`🔄 Schedule ${schedule.id} reset for next day`);
                     }
                 });
                 
                 updateNextScheduled();
-            }, 3000); // Check every 3 seconds
+                updateSchedulesList();
+            }, 3000);
             
-            console.log('📅 Schedule checker started - checking every 3 seconds');
+            console.log('📅 Schedule checker started');
         }
 
         function triggerScheduledAnnouncement(schedule) {
@@ -1040,6 +1604,7 @@
                 status: 'queued',
                 createdAt: new Date(),
                 priority: 'scheduled',
+                repeat: schedule.repeat,
                 scheduledId: schedule.id
             };
             
@@ -1049,8 +1614,6 @@
             
             updateStats();
             updateQueue();
-            
-            showToast(`📅 Scheduled announcement triggered for Train ${schedule.trainNumber}`, 'purple');
         }
 
         function previewAudio() {
@@ -1059,56 +1622,27 @@
             const isBilingual = document.getElementById('bilingual').checked;
             
             if (!textArabic && !textEnglish) {
-                showToast('Please enter announcement text first', 'red');
+                showToast('Please enter text first', 'red');
                 return;
             }
-            
-            showToast('🔊 Playing preview...', 'blue');
-            updateAudioStatus('Playing');
             
             if (isBilingual && textArabic && textEnglish) {
                 speakText(textArabic, 'ar', () => {
                     setTimeout(() => {
                         speakText(textEnglish, 'en', () => {
-                            updateAudioStatus('Ready');
                             showToast('✅ Preview completed');
                         });
                     }, 500);
                 });
             } else if (textArabic) {
                 speakText(textArabic, 'ar', () => {
-                    updateAudioStatus('Ready');
                     showToast('✅ Preview completed');
                 });
             } else {
                 speakText(textEnglish, 'en', () => {
-                    updateAudioStatus('Ready');
                     showToast('✅ Preview completed');
                 });
             }
-        }
-
-        function speakText(text, lang, callback) {
-            if (!text) {
-                if (callback) callback();
-                return;
-            }
-            
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = lang === 'ar' ? 'ar-SA' : 'en-US';
-            utterance.rate = 0.9;
-            utterance.pitch = 1;
-            utterance.volume = 1;
-            
-            const voice = voices.find(v => v.lang.startsWith(lang)) || voices[0];
-            if (voice) utterance.voice = voice;
-            
-            utterance.onend = callback;
-            utterance.onerror = () => {
-                if (callback) callback();
-            };
-            
-            synth.speak(utterance);
         }
 
         function startQueueProcessor() {
@@ -1130,17 +1664,23 @@
             updateStats();
             updateQueue();
             
-            showToast(`⚙️ Processing Platform ${announcement.platform}`);
-            updateAudioStatus('Processing');
-            
             await new Promise(resolve => setTimeout(resolve, 1000));
             
             announcement.status = 'playing';
             updateQueue();
-            updateAudioStatus('Playing');
             
             const playAudio = () => {
                 return new Promise((resolve) => {
+                    // Check if this is a live recording
+                    if (announcement.isLiveRecording && announcement.audioBlob) {
+                        const audio = new Audio(URL.createObjectURL(announcement.audioBlob));
+                        audio.onended = resolve;
+                        audio.onerror = resolve;
+                        audio.play();
+                        return;
+                    }
+                    
+                    // Otherwise use TTS as usual
                     if (announcement.isBilingual && announcement.textArabic && announcement.textEnglish) {
                         speakText(announcement.textArabic, 'ar', () => {
                             setTimeout(() => {
@@ -1167,7 +1707,6 @@
             updateStats();
             updateQueue();
             updateHistory();
-            updateAudioStatus('Ready');
             
             showToast(`✅ Completed Platform ${announcement.platform}`, 'green');
             
@@ -1177,25 +1716,30 @@
         function pauseQueue() {
             isQueuePaused = !isQueuePaused;
             const btn = document.getElementById('pauseBtn');
-            const statusNav = document.getElementById('queueStatusNav');
+            const statusNav = document.getElementById('systemStatus');
+            const queueStatusText = document.getElementById('queueStatus');
             const container = document.getElementById('queueContainer');
             
             if (isQueuePaused) {
                 btn.innerHTML = '▶️ Resume Queue';
                 btn.classList.remove('bg-yellow-500', 'hover:bg-yellow-600');
                 btn.classList.add('bg-green-500', 'hover:bg-green-600');
-                statusNav.textContent = 'Paused';
-                statusNav.classList.add('text-red-400');
+                statusNav.textContent = 'PAUSED';
+                queueStatusText.textContent = 'Paused';
+                queueStatusText.classList.remove('bg-green-100', 'text-green-700');
+                queueStatusText.classList.add('bg-red-100', 'text-red-700');
                 container.classList.add('paused');
-                showToast('⏸️ Queue PAUSED - Announcements stopped', 'yellow');
+                showToast('⏸️ Queue PAUSED', 'yellow');
             } else {
                 btn.innerHTML = '⏸️ Pause Queue';
                 btn.classList.remove('bg-green-500', 'hover:bg-green-600');
                 btn.classList.add('bg-yellow-500', 'hover:bg-yellow-600');
-                statusNav.textContent = 'Running';
-                statusNav.classList.remove('text-red-400');
+                statusNav.textContent = 'LIVE';
+                queueStatusText.textContent = 'Running';
+                queueStatusText.classList.remove('bg-red-100', 'text-red-700');
+                queueStatusText.classList.add('bg-green-100', 'text-green-700');
                 container.classList.remove('paused');
-                showToast('▶️ Queue RESUMED - Processing continues', 'green');
+                showToast('▶️ Queue RESUMED', 'green');
             }
         }
 
@@ -1204,7 +1748,7 @@
             const platform = document.getElementById('urgentPlatform').value || 'ALL';
             
             if (!text) {
-                showToast('⚠️ Please enter urgent message', 'red');
+                showToast('⚠️ Please enter message', 'red');
                 return;
             }
             
@@ -1218,7 +1762,8 @@
                 isBilingual: false,
                 status: 'queued',
                 createdAt: new Date(),
-                priority: 'urgent'
+                priority: 'urgent',
+                repeat: 'none'
             };
             
             announcementQueue.unshift(urgentAnnouncement);
@@ -1228,7 +1773,7 @@
             updateStats();
             updateQueue();
             
-            showToast('🚨 URGENT ANNOUNCEMENT QUEUED!', 'red');
+            showToast('🚨 URGENT QUEUED!', 'red');
             
             document.getElementById('urgentText').value = '';
             document.getElementById('urgentPlatform').value = '';
@@ -1237,7 +1782,7 @@
         }
 
         function clearQueue() {
-            if (confirm('Clear entire queue?')) {
+            if (confirm('Clear queue?')) {
                 announcementQueue = [];
                 stats.queued = 0;
                 updateStats();
@@ -1258,20 +1803,27 @@
             const queueList = document.getElementById('queueList');
             
             if (announcementQueue.length === 0) {
-                queueList.innerHTML = '<div class="text-center text-gray-500 py-8">Queue is empty. Create an announcement to get started!</div>';
+                queueList.innerHTML = '<div class="text-center text-gray-500 py-8">Queue is empty.</div>';
                 return;
             }
             
-            queueList.innerHTML = announcementQueue.map((item, index) => `
-                <div class="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition ${item.status === 'processing' || item.status === 'playing' ? 'processing border-blue-500' : ''}">
+            queueList.innerHTML = announcementQueue.map((item, index) => {
+                const displayText = item.isLiveRecording 
+                    ? `🎙️ Live Recording (${item.language === 'en' ? 'English' : 'Arabic'})` 
+                    : item.textEnglish || 'Announcement';
+                const displayTextAr = item.isLiveRecording ? '' : item.textArabic;
+                
+                return `
+                <div class="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition ${item.status === 'processing' || item.status === 'playing' ? 'processing border-2' : ''}" style="${item.status === 'processing' || item.status === 'playing' ? 'border-color: var(--sar-teal)' : ''}">
                     <div class="flex items-center space-x-4">
                         <div class="w-12 h-12 bg-${getStatusColor(item.status)}-100 rounded-lg flex items-center justify-center">
-                            <span class="text-xl">${getStatusIcon(item.status)}</span>
+                            <span class="text-xl">${item.isLiveRecording ? '🎙️' : getStatusIcon(item.status)}</span>
                         </div>
                         <div>
-                            <p class="font-semibold text-gray-800">Platform ${item.platform} - Train ${item.trainNumber}</p>
-                            <p class="text-sm text-gray-600">${item.textEnglish}</p>
-                            ${item.textArabic ? `<p class="text-sm text-gray-600" dir="rtl">${item.textArabic}</p>` : ''}
+                            <p class="font-semibold" style="color: var(--sar-gray)">Platform ${item.platform} - Train ${item.trainNumber}</p>
+                            <p class="text-sm text-gray-600">${displayText}</p>
+                            ${displayTextAr ? `<p class="text-sm text-gray-600" dir="rtl">${displayTextAr}</p>` : ''}
+                            ${item.repeat !== 'none' ? `<span class="text-xs text-purple-600">🔄 ${item.repeat}</span>` : ''}
                         </div>
                     </div>
                     <div class="text-right">
@@ -1281,14 +1833,15 @@
                         </span>
                     </div>
                 </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function updateHistory() {
             const historyList = document.getElementById('historyList');
             
             if (historyItems.length === 0) {
-                historyList.innerHTML = '<div class="text-center text-gray-500 py-8">No announcements yet. Create one to see it here!</div>';
+                historyList.innerHTML = '<div class="text-center text-gray-500 py-8">No history yet.</div>';
                 return;
             }
             
@@ -1299,10 +1852,10 @@
                             <span class="text-xl">${getStatusIcon(item.status)}</span>
                         </div>
                         <div>
-                            <p class="font-semibold text-gray-800">Platform ${item.platform} - Train ${item.trainNumber} → ${item.destination}</p>
+                            <p class="font-semibold" style="color: var(--sar-gray)">Platform ${item.platform} - Train ${item.trainNumber} → ${item.destination}</p>
                             <p class="text-sm text-gray-600">${item.textEnglish}</p>
                             ${item.textArabic ? `<p class="text-sm text-gray-600" dir="rtl">${item.textArabic}</p>` : ''}
-                            <p class="text-xs text-gray-500">${formatTime(item.completedAt || item.createdAt)}</p>
+                            <p class="text-xs text-gray-500 mt-1">${formatTime(item.completedAt || item.createdAt)}</p>
                         </div>
                     </div>
                     <button onclick="replayAnnouncement(${item.id})" class="p-2 hover:bg-gray-100 rounded" title="Replay">
@@ -1317,20 +1870,17 @@
             if (!item) return;
             
             showToast('🔊 Replaying...');
-            updateAudioStatus('Playing');
             
             if (item.isBilingual && item.textArabic && item.textEnglish) {
                 speakText(item.textArabic, 'ar', () => {
                     setTimeout(() => {
-                        speakText(item.textEnglish, 'en', () => {
-                            updateAudioStatus('Ready');
-                        });
+                        speakText(item.textEnglish, 'en', () => {});
                     }, 500);
                 });
             } else if (item.textArabic) {
-                speakText(item.textArabic, 'ar', () => updateAudioStatus('Ready'));
+                speakText(item.textArabic, 'ar', () => {});
             } else {
-                speakText(item.textEnglish, 'en', () => updateAudioStatus('Ready'));
+                speakText(item.textEnglish, 'en', () => {});
             }
         }
 
@@ -1339,6 +1889,8 @@
             document.getElementById('stat-completed').textContent = stats.completed;
             document.getElementById('stat-queued').textContent = announcementQueue.length;
             document.getElementById('stat-scheduled').textContent = schedules.filter(s => s.active).length;
+            document.getElementById('stat-hourly').textContent = schedules.filter(s => s.repeat === 'hourly' && s.active).length;
+            document.getElementById('stat-recurring').textContent = schedules.filter(s => (s.repeat === 'weekly' || s.repeat === 'monthly') && s.active).length;
         }
 
         function getStatusColor(status) {
@@ -1362,13 +1914,6 @@
             return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
         }
 
-        function formatDateTime(date) {
-            return date.toLocaleString('en-US', { 
-                month: 'short', day: 'numeric', 
-                hour: '2-digit', minute: '2-digit' 
-            });
-        }
-
         function setupCharacterCounters() {
             document.getElementById('textArabic').addEventListener('input', function(e) {
                 document.getElementById('arabicCount').textContent = e.target.value.length;
@@ -1390,6 +1935,316 @@
             const activeBtn = document.getElementById('tab-' + tabName);
             activeBtn.classList.add('active', 'bg-blue-100', 'text-blue-700');
             activeBtn.classList.remove('text-gray-600');
+            
+            // Refresh schedule grid when switching to schedule view
+            if (tabName === 'schedule-view') {
+                renderScheduleGrid();
+            }
+        }
+
+        // Schedule Grid Functions
+        function renderScheduleGrid() {
+            const grid = document.getElementById('scheduleGrid');
+            
+            if (schedules.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-12">
+                        <p class="text-gray-500 text-lg mb-4">No schedules yet</p>
+                        <button onclick="showTab('schedule-create')" class="sar-button px-6 py-3 rounded-lg font-medium hover:opacity-90 transition">
+                            ➕ Create Your First Schedule
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            const filteredSchedules = getFilteredSchedules();
+            
+            if (filteredSchedules.length === 0) {
+                grid.innerHTML = '<div class="col-span-full text-center text-gray-500 py-12">No schedules match your filters</div>';
+                return;
+            }
+            
+            grid.innerHTML = filteredSchedules.map(schedule => {
+                const scheduledTime = new Date(`${schedule.date}T${schedule.time}:00`);
+                const now = new Date();
+                const isPast = scheduledTime < now && schedule.repeat === 'none';
+                
+                const repeatColors = {
+                    'hourly': 'bg-blue-100 text-blue-700',
+                    'daily': 'bg-green-100 text-green-700',
+                    'weekly': 'bg-purple-100 text-purple-700',
+                    'monthly': 'bg-indigo-100 text-indigo-700',
+                    'none': 'bg-gray-100 text-gray-700'
+                };
+                
+                const repeatIcons = {
+                    'hourly': '⏰',
+                    'daily': '📅',
+                    'weekly': '📆',
+                    'monthly': '🗓️',
+                    'none': '📌'
+                };
+                
+                return `
+                    <div class="bg-white rounded-xl shadow-md p-6 border-t-4 ${isPast ? 'opacity-60' : ''}" style="border-color: var(--sar-teal)">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="text-2xl">${repeatIcons[schedule.repeat]}</span>
+                                    <h3 class="text-lg font-bold" style="color: var(--sar-gray)">Train ${schedule.trainNumber}</h3>
+                                </div>
+                                <p class="text-sm text-gray-600">Platform ${schedule.platform} → ${schedule.destination}</p>
+                            </div>
+                            <span class="px-3 py-1 ${repeatColors[schedule.repeat]} rounded-full text-xs font-medium">
+                                ${schedule.repeat.toUpperCase()}
+                            </span>
+                        </div>
+                        
+                        <div class="mb-4 space-y-2">
+                            <div class="flex items-center text-sm text-gray-600">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                                ${schedule.date}
+                            </div>
+                            <div class="flex items-center text-sm text-gray-600">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                ${schedule.time}
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+                            <p class="text-sm text-gray-700 mb-1">${schedule.textEnglish}</p>
+                            ${schedule.textArabic ? `<p class="text-sm text-gray-700" dir="rtl">${schedule.textArabic}</p>` : ''}
+                        </div>
+                        
+                        <div class="flex gap-2">
+                            <button onclick="editSchedule(${schedule.id})" class="flex-1 px-4 py-2 border-2 rounded-lg font-medium hover:bg-gray-50 transition text-sm" style="border-color: var(--sar-teal); color: var(--sar-teal)">
+                                ✏️ Edit
+                            </button>
+                            <button onclick="testScheduleNow(${schedule.id})" class="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition text-sm">
+                                ▶️ Test
+                            </button>
+                            <button onclick="deleteSchedule(${schedule.id})" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition text-sm">
+                                🗑️
+                            </button>
+                        </div>
+                        
+                        ${!schedule.active ? '<div class="mt-2 text-xs text-red-600">⚠️ Inactive</div>' : ''}
+                        ${isPast ? '<div class="mt-2 text-xs text-gray-500">⏰ Past schedule</div>' : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getFilteredSchedules() {
+            const repeatFilter = document.getElementById('filterRepeat').value;
+            const statusFilter = document.getElementById('filterStatus').value;
+            
+            return schedules.filter(s => {
+                const repeatMatch = repeatFilter === 'all' || s.repeat === repeatFilter;
+                const statusMatch = statusFilter === 'all' || 
+                    (statusFilter === 'active' && s.active) || 
+                    (statusFilter === 'inactive' && !s.active);
+                return repeatMatch && statusMatch;
+            });
+        }
+
+        function filterSchedules() {
+            renderScheduleGrid();
+        }
+
+        function refreshSchedules() {
+            renderScheduleGrid();
+            showToast('🔄 Schedules refreshed', 'blue');
+        }
+
+        function editSchedule(id) {
+            const schedule = schedules.find(s => s.id === id);
+            if (!schedule) return;
+            
+            // Switch to create schedule tab and populate form
+            showTab('schedule-create');
+            
+            document.getElementById('sched-platform').value = schedule.platform;
+            document.getElementById('sched-train').value = schedule.trainNumber;
+            document.getElementById('sched-destination').value = schedule.destination;
+            document.getElementById('sched-date').value = schedule.date;
+            document.getElementById('sched-time').value = schedule.time;
+            document.getElementById('sched-english').value = schedule.textEnglish;
+            document.getElementById('sched-arabic').value = schedule.textArabic;
+            document.getElementById('sched-repeat').value = schedule.repeat;
+            document.getElementById('sched-bilingual').checked = !!schedule.textArabic;
+            
+            // Store the ID for updating
+            document.getElementById('sched-platform').dataset.editingId = id;
+            
+            showToast('✏️ Editing schedule - Update the form and submit', 'blue');
+        }
+
+        function resetScheduleForm() {
+            document.getElementById('sched-platform').value = '';
+            document.getElementById('sched-train').value = '';
+            document.getElementById('sched-destination').value = '';
+            document.getElementById('sched-english').value = '';
+            document.getElementById('sched-arabic').value = '';
+            document.getElementById('sched-repeat').value = 'none';
+            document.getElementById('sched-bilingual').checked = true;
+            setDefaultDateTime();
+            delete document.getElementById('sched-platform').dataset.editingId;
+            showToast('🔄 Form reset', 'blue');
+        }
+
+        // Live Recording Functions
+        let liveRecorder = null;
+        let liveAudioChunks = [];
+        let liveRecordingTimer = null;
+        let liveRecordingSeconds = 0;
+        let liveRecordingLang = 'en';
+        let liveRecordedBlob = null;
+
+        function setLiveRecordingLang(lang) {
+            liveRecordingLang = lang;
+            document.getElementById('liveRecordLangEn').className = lang === 'en' 
+                ? 'p-4 border-2 sar-badge rounded-lg font-medium transition' 
+                : 'p-4 border-2 border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition';
+            document.getElementById('liveRecordLangAr').className = lang === 'ar' 
+                ? 'p-4 border-2 sar-badge rounded-lg font-medium transition' 
+                : 'p-4 border-2 border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition';
+            document.getElementById('liveLangDisplay').textContent = `Language: ${lang === 'en' ? 'English' : 'Arabic (العربية)'}`;
+        }
+
+        async function toggleLiveRecording() {
+            if (liveRecorder && liveRecorder.state === 'recording') {
+                stopLiveRecording();
+            } else {
+                await startLiveRecording();
+            }
+        }
+
+        async function startLiveRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                liveRecorder = new MediaRecorder(stream);
+                liveAudioChunks = [];
+                liveRecordingSeconds = 0;
+                
+                liveRecorder.ondataavailable = (e) => {
+                    liveAudioChunks.push(e.data);
+                };
+                
+                liveRecorder.onstop = () => {
+                    liveRecordedBlob = new Blob(liveAudioChunks, { type: 'audio/wav' });
+                    const audioUrl = URL.createObjectURL(liveRecordedBlob);
+                    document.getElementById('liveAudioPlayer').src = audioUrl;
+                    document.getElementById('liveAudioPreview').classList.remove('hidden');
+                    
+                    // Stop all tracks
+                    stream.getTracks().forEach(track => track.stop());
+                };
+                
+                liveRecorder.start();
+                
+                // Update UI
+                document.getElementById('liveRecordBtn').classList.add('recording');
+                document.getElementById('liveRecordIcon').innerHTML = `
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/>
+                `;
+                document.getElementById('liveRecordStatus').textContent = '🔴 Recording... Click to Stop';
+                
+                // Start timer
+                liveRecordingTimer = setInterval(() => {
+                    liveRecordingSeconds++;
+                    const mins = Math.floor(liveRecordingSeconds / 60).toString().padStart(2, '0');
+                    const secs = (liveRecordingSeconds % 60).toString().padStart(2, '0');
+                    document.getElementById('liveRecordTimer').textContent = `${mins}:${secs}`;
+                }, 1000);
+                
+                showToast('🎤 Recording started', 'red');
+            } catch (error) {
+                console.error('Error accessing microphone:', error);
+                showToast('❌ Microphone access denied', 'red');
+            }
+        }
+
+        function stopLiveRecording() {
+            if (liveRecorder && liveRecorder.state === 'recording') {
+                liveRecorder.stop();
+                clearInterval(liveRecordingTimer);
+                
+                // Reset UI
+                document.getElementById('liveRecordBtn').classList.remove('recording');
+                document.getElementById('liveRecordIcon').innerHTML = `
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                `;
+                document.getElementById('liveRecordStatus').textContent = 'Recording Saved! Click to Record Again';
+                
+                showToast('✅ Recording saved', 'green');
+            }
+        }
+
+        function deleteLiveRecording() {
+            liveRecordedBlob = null;
+            document.getElementById('liveAudioPreview').classList.add('hidden');
+            document.getElementById('liveRecordTimer').textContent = '00:00';
+            document.getElementById('liveRecordStatus').textContent = 'Click to Start Recording';
+            showToast('🗑️ Recording deleted', 'red');
+        }
+
+        function playLivePreview() {
+            if (liveRecordedBlob) {
+                document.getElementById('liveAudioPlayer').play();
+            } else {
+                showToast('⚠️ No recording to preview', 'yellow');
+            }
+        }
+
+        function createLiveAnnouncement(e) {
+            e.preventDefault();
+            
+            if (!liveRecordedBlob) {
+                showToast('⚠️ Please record your voice first', 'yellow');
+                return;
+            }
+            
+            const platform = document.getElementById('live-platform').value || 'N/A';
+            const trainNumber = document.getElementById('live-trainNumber').value || 'N/A';
+            const destination = document.getElementById('live-destination').value || 'N/A';
+            
+            const announcement = {
+                id: nextId++,
+                platform: platform,
+                trainNumber: trainNumber,
+                destination: destination,
+                audioBlob: liveRecordedBlob,
+                language: liveRecordingLang,
+                isLiveRecording: true,
+                isBilingual: document.getElementById('live-bilingual').checked,
+                status: 'queued',
+                createdAt: new Date(),
+                priority: 'normal',
+                repeat: 'none'
+            };
+            
+            announcementQueue.push(announcement);
+            stats.total++;
+            stats.queued++;
+            
+            updateStats();
+            updateQueue();
+            
+            const platformText = platform !== 'N/A' ? `Platform ${platform}` : 'General';
+            showToast(`✅ Live announcement queued for ${platformText}`);
+            
+            // Reset form
+            e.target.reset();
+            deleteLiveRecording();
+            
+            showTab('dashboard');
         }
 
         function toggleLanguage() {
@@ -1409,7 +2264,15 @@
             const toast = document.getElementById('toast');
             const toastMessage = document.getElementById('toastMessage');
             
-            toast.className = `fixed bottom-4 right-4 bg-${color}-600 text-white px-6 py-4 rounded-lg shadow-lg z-50`;
+            const colors = {
+                'green': 'var(--sar-teal)',
+                'blue': '#3b82f6',
+                'red': '#ef4444',
+                'yellow': '#eab308',
+                'purple': '#a855f7'
+            };
+            
+            toast.style.background = colors[color] || colors['green'];
             toastMessage.textContent = message;
             toast.classList.remove('hidden');
             
@@ -1417,9 +2280,23 @@
         }
 
         window.addEventListener('beforeunload', () => {
+            // Stop any playing audio
             synth.cancel();
+            if (currentAudioSource) {
+                try {
+                    currentAudioSource.stop();
+                } catch (e) {}
+            }
+            
+            // Clear intervals
             if (queueProcessorInterval) clearInterval(queueProcessorInterval);
             if (scheduleCheckInterval) clearInterval(scheduleCheckInterval);
+            if (clockInterval) clearInterval(clockInterval);
+            
+            // Close audio context
+            if (audioContext) {
+                audioContext.close();
+            }
         });
     </script>
 </body>
